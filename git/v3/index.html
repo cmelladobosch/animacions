@@ -1,0 +1,2402 @@
+<!DOCTYPE html>
+<html lang="ca">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="@CMB - Institut Montilivi, Girona">
+    <meta name="description"
+        content="Simulació interactiva per a docència sobre fluxos de control de versions Git i encapsulament Docker (Build, Push, Pull, Run).">
+    <meta name="keywords" content="Git, Docker, DevOps, Educació, Simulador, Montilivi, Desenvolupament Web">
+    <meta name="license" content="MIT License - Programari Lliure">
+    <meta name="theme-color" content="#0f172a">
+    <title>Animació Comandes GIT i DOCKER - @CMB Montilivi</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* CSS reset & variables */
+        :root {
+            --bg-dark: #0f172a;
+            --panel-bg: rgba(30, 41, 59, 0.7);
+            --box-bg: rgba(15, 23, 42, 0.6);
+            /* Nova variable */
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --log-bg: rgba(15, 23, 42, 0.9);
+            --btn-bg: rgba(30, 41, 59, 0.5);
+            /* Nova variable */
+            --terminal-header: rgba(0, 0, 0, 0.3);
+
+            /* Tema de Pestanyes base */
+            --tab-bg: rgba(15, 23, 42, 0.4);
+            --tab-bg-hover: rgba(30, 41, 59, 0.8);
+            --tab-text-hover: #ffffff;
+            --tab-active-text: #ffffff;
+
+            /* Mantenim els colors de les comandes igual */
+            --color-clone: #a855f7;
+            --color-init: #6366f1;
+            --color-add: #eab308;
+            --color-commit: #22c55e;
+            --color-remote: #f97316;
+            --color-push: #ef4444;
+            --color-fetch: #3b82f6;
+            --color-merge: #14b8a6;
+            --color-pull-dev: #06b6d4;
+            --color-pull: #8b5cf6;
+
+            /* Docker Colors */
+            --color-d-build: #0ea5e9;
+            --color-d-push: #0284c7;
+            --color-d-pull: #0369a1;
+            --color-d-run: #38bdf8;
+
+            /* Context Selector Base */
+            --dev-bg-active: #1e293b;
+            --dev-text-active: #ffffff;
+
+            /* Interiors Base Oscur */
+            --header-text: #e2e8f0;
+            --stage-text: #cbd5e1;
+            --stage-action-bg: rgba(0, 0, 0, 0.3);
+            --stage-border: rgba(255, 255, 255, 0.05);
+            --entity-icon: #94a3b8;
+        }
+
+        :root[data-theme="light"] {
+            --bg-dark: #f1f5f9;
+            --panel-bg: rgba(255, 255, 255, 0.8);
+            --box-bg: rgba(255, 255, 255, 0.5);
+            /* Fons clar per a les caixes */
+            --glass-border: rgba(0, 0, 0, 0.08);
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --log-bg: #ffffff;
+            --btn-bg: rgba(226, 232, 240, 0.8);
+            /* Botons més clars */
+            --terminal-header: #f8fafc;
+
+            /* Pestanyes Mode Clar */
+            --tab-bg: rgba(226, 232, 240, 0.9);
+            --tab-bg-hover: rgba(203, 213, 225, 0.9);
+            --tab-text-hover: #0f172a;
+            --tab-active-text: #1e293b;
+
+            /* Context Selector Mode Clar */
+            --dev-bg-active: #94a3b8;
+            --dev-text-active: #ffffff;
+
+            /* Interiors Base Clar */
+            --header-text: #334155;
+            --stage-text: #888888;
+            --stage-action-bg: rgba(0, 0, 0, 0.05);
+            --stage-border: rgba(0, 0, 0, 0.15);
+            --entity-icon: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            height: 100vh;
+            max-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-image:
+                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(239, 68, 68, 0.15), transparent 25%);
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 1rem 0.5rem;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f43f5e, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.3rem;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        /* Control Panel */
+        .controls-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            z-index: 10;
+        }
+
+        .dev-selector {
+            display: flex;
+            gap: 0.5rem;
+            background: var(--box-bg);
+            padding: 0.3rem;
+            border-radius: 999px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .dev-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.3rem 1rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dev-btn.active {
+            background: var(--dev-bg-active);
+            color: var(--dev-text-active);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: var(--btn-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 0.4rem 0.8rem;
+            border-radius: 999px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn.active {
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: var(--tab-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            padding: 0.6rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tab-btn:hover {
+            background: var(--tab-bg-hover);
+            color: var(--tab-text-hover);
+        }
+
+        .tab-btn.active.tab-git {
+            background: rgba(99, 102, 241, 0.15);
+            border-color: #6366f1;
+            color: var(--tab-active-text);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.2) inset, 0 2px 10px rgba(99, 102, 241, 0.2);
+            z-index: 2;
+        }
+
+        .tab-btn.active.tab-docker {
+            background: rgba(14, 165, 233, 0.15);
+            border-color: #0ea5e9;
+            color: var(--tab-active-text);
+            box-shadow: 0 0 15px rgba(14, 165, 233, 0.2) inset, 0 2px 10px rgba(14, 165, 233, 0.2);
+            z-index: 2;
+        }
+
+        .btn-clone:hover,
+        .btn-clone.active {
+            border-color: var(--color-clone);
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+        }
+
+        .btn-init:hover,
+        .btn-init.active {
+            border-color: var(--color-init);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-add:hover,
+        .btn-add.active {
+            border-color: var(--color-add);
+            box-shadow: 0 0 15px rgba(234, 179, 8, 0.4);
+        }
+
+        .btn-commit:hover,
+        .btn-commit.active {
+            border-color: var(--color-commit);
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
+        }
+
+        .btn-remote:hover,
+        .btn-remote.active {
+            border-color: var(--color-remote);
+            box-shadow: 0 0 15px rgba(249, 115, 22, 0.4);
+        }
+
+        .btn-push:hover,
+        .btn-push.active {
+            border-color: var(--color-push);
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-fetch:hover,
+        .btn-fetch.active {
+            border-color: var(--color-fetch);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-merge:hover,
+        .btn-merge.active {
+            border-color: var(--color-merge);
+            box-shadow: 0 0 15px rgba(20, 184, 166, 0.4);
+        }
+
+        .btn-pull-dev:hover,
+        .btn-pull-dev.active {
+            border-color: var(--color-pull-dev);
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+        }
+
+        .btn-pull:hover,
+        .btn-pull.active {
+            border-color: var(--color-pull);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Docker Button Hovers */
+        .btn-d-build:hover,
+        .btn-d-build.active {
+            border-color: var(--color-d-build);
+            box-shadow: 0 0 15px rgba(14, 165, 233, 0.4);
+        }
+
+        .btn-d-push:hover,
+        .btn-d-push.active {
+            border-color: var(--color-d-push);
+            box-shadow: 0 0 15px rgba(2, 132, 199, 0.4);
+        }
+
+        .btn-d-pull:hover,
+        .btn-d-pull.active {
+            border-color: var(--color-d-pull);
+            box-shadow: 0 0 15px rgba(3, 105, 161, 0.4);
+        }
+
+        .btn-d-run:hover,
+        .btn-d-run.active {
+            border-color: var(--color-d-run);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+        }
+
+        .btn-status:hover,
+        .btn-status.active {
+            border-color: #94a3b8;
+            box-shadow: 0 0 15px rgba(148, 163, 184, 0.4);
+        }
+
+        .btn-branch:hover,
+        .btn-branch.active {
+            border-color: #f472b6;
+            box-shadow: 0 0 15px rgba(244, 114, 182, 0.4);
+        }
+
+        .btn-pr:hover,
+        .btn-pr.active {
+            border-color: #fbbf24;
+            box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
+        }
+
+        .highlight-branch {
+            box-shadow: 0 0 20px rgba(244, 114, 182, 0.5);
+            border-color: #f472b6;
+        }
+
+        .highlight-pr {
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+            border-color: #fbbf24;
+        }
+
+        .branch-badge {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            font-family: 'JetBrains Mono', monospace;
+            vertical-align: middle;
+        }
+
+        /* Main Workspace */
+        .workspace {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 140px 1fr;
+            flex: 1;
+            padding: 1rem 1vw;
+            position: relative;
+            z-index: 5;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            height: 100%;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        /* Connecting Lines */
+        .svg-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .path-line {
+            fill: none;
+            stroke: rgba(148, 163, 184, 0.3);
+            stroke-width: 2;
+            stroke-dasharray: 6, 6;
+            transition: all 0.3s ease;
+        }
+
+        .path-line.active {
+            stroke: rgba(255, 255, 255, 0.8);
+            stroke-width: 3;
+            stroke-dasharray: 0;
+        }
+
+        /* Packet Animation */
+        .packet {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.7rem;
+            color: #fff;
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.8);
+            opacity: 0;
+            z-index: 20;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Entities */
+        .entity {
+            background: var(--panel-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 0.8rem;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+            z-index: 10;
+        }
+
+        .entity-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--entity-icon);
+        }
+
+        .entity-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.8rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--header-text);
+        }
+
+        /* Left side - Developers */
+        .developers-col {
+            grid-column: 1 / 2;
+            grid-row: 1 / 3;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            justify-content: center;
+        }
+
+        .developer {
+            width: 100%;
+            max-width: 280px;
+            padding: 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .developer.active-dev {
+            border-color: rgba(56, 189, 248, 0.5);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.1);
+        }
+
+        .prod-server.active-dev {
+            border-color: rgba(139, 92, 246, 0.8);
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.4);
+        }
+
+        .dev-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.8rem;
+            font-weight: bold;
+            color: var(--header-text);
+        }
+
+        /* Local Git Areas */
+        .git-stages {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            width: 100%;
+        }
+
+        .stage-box {
+            background: var(--box-bg);
+            border: 1px solid var(--stage-border);
+            border-radius: 0.4rem;
+            padding: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stage-title {
+            font-size: 0.65rem;
+            color: var(--stage-text);
+            margin-bottom: 0.3rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .stage-action {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--entity-icon);
+            font-size: 0.55rem;
+            background: var(--stage-action-bg);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .file-item {
+            height: 10px;
+            border-radius: 3px;
+            background: #334155;
+            margin-bottom: 3px;
+            width: 0%;
+            transition: all 0.4s ease;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Remote Repo */
+        .remote-col {
+            grid-column: 2 / 3;
+            grid-row: 1 / 3;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .remote-repo,
+        .container-registry {
+            width: 220px;
+            border-color: rgba(239, 68, 68, 0.3);
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.1);
+        }
+
+        .container-registry {
+            border-color: rgba(36, 150, 237, 0.3);
+            box-shadow: 0 0 30px rgba(36, 150, 237, 0.1);
+        }
+
+        .repo-commits {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 5px;
+            background: var(--box-bg);
+            border-radius: 4px;
+            border: 1px solid var(--stage-border);
+            padding: 5px;
+            min-height: 60px;
+        }
+
+        .commit-row {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            background: var(--box-bg);
+            padding: 3px 5px;
+            border-radius: 3px;
+            border-left: 2px solid #ef4444;
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: all 0.4s ease;
+            color: var(--stage-text);
+        }
+
+        .commit-row.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* Docker Elements */
+        .docker-image {
+            width: 100%;
+            height: 30px;
+            background: #0ea5e9;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.65rem;
+            font-weight: bold;
+            font-family: 'JetBrains Mono', monospace;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.4s ease;
+            margin-top: 5px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .docker-image.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .running-container {
+            width: 100%;
+            height: 40px;
+            background: #0284c7;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.70rem;
+            font-weight: bold;
+            font-family: 'JetBrains Mono', monospace;
+            margin-top: 8px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.5s ease;
+            border-left: 4px solid #38bdf8;
+            box-shadow: 0 0 15px rgba(2, 132, 199, 0.4);
+        }
+
+        .running-container.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Production Web Server */
+        .server-col {
+            grid-column: 3 / 4;
+            grid-row: 1 / 3;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .prod-server {
+            width: 220px;
+            border-color: rgba(139, 92, 246, 0.3);
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.1);
+        }
+
+        .server-files {
+            width: 100%;
+            background: var(--box-bg);
+            border-radius: 4px;
+            border: 1px solid var(--stage-border);
+            padding: 8px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            min-height: 80px;
+        }
+
+        .s-file {
+            height: 20px;
+            background: #334155;
+            border-radius: 3px;
+            transition: all 0.5s ease;
+        }
+
+        /* Description Box */
+        .info-panel {
+            background: var(--panel-bg);
+            border-top: 1px solid var(--glass-border);
+            padding: 1rem;
+            z-index: 10;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            backdrop-filter: blur(12px);
+        }
+
+        .info-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+            transition: color 0.3s ease;
+        }
+
+        .info-desc {
+            max-width: 800px;
+            color: var(--text-muted);
+            line-height: 1.4;
+            font-size: 0.85rem;
+        }
+
+        .info-code {
+            margin-top: 0.5rem;
+            background: rgba(15, 23, 42, 0.8);
+            padding: 0.3rem 0.6rem;
+            border-radius: 0.3rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            font-family: 'JetBrains Mono', monospace;
+            color: #fca5a5;
+            font-size: 0.75rem;
+        }
+
+        /* Highlights */
+        .highlight-clone {
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+            border-color: #a855f7;
+        }
+
+        .highlight-init {
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.5) inset;
+            border-color: #6366f1;
+        }
+
+        .highlight-add {
+            box-shadow: 0 0 15px rgba(234, 179, 8, 0.5) inset;
+            border-color: #eab308;
+        }
+
+        .highlight-commit {
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.5) inset;
+            border-color: #22c55e;
+        }
+
+        .highlight-remote {
+            box-shadow: 0 0 20px rgba(249, 115, 22, 0.5);
+            border-color: #f97316;
+        }
+
+        .highlight-push {
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+            border-color: #ef4444;
+        }
+
+        .highlight-fetch {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            border-color: #3b82f6;
+        }
+
+        .highlight-merge {
+            box-shadow: 0 0 20px rgba(20, 184, 166, 0.5) inset;
+            border-color: #14b8a6;
+        }
+
+        .highlight-pull-dev {
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.5);
+            border-color: #06b6d4;
+        }
+
+        .highlight-pull {
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+            border-color: #8b5cf6;
+        }
+
+        .highlight-docker {
+            box-shadow: 0 0 20px rgba(36, 150, 237, 0.5);
+            border-color: #2496ed;
+        }
+
+        /* DASHBOARD 3 COLS */
+        .top-navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem 0.5rem 1.5rem;
+            max-width: 1900px;
+            margin: 0 auto;
+            width: 100%;
+            z-index: 10;
+        }
+
+        .brand h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #236fcb, #8653b9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        .theme-toggle-btn {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .theme-toggle-btn:hover {
+            color: #fff;
+            background: rgba(30, 41, 59, 0.8);
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+
+        .main-dashboard {
+            display: flex;
+            flex-direction: row;
+            flex: 1;
+            padding: 0 1.5rem 1.5rem 1.5rem;
+            gap: 1.5rem;
+            max-width: 1900px;
+            margin: 0 auto;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .sidebar-left {
+            display: flex;
+            flex-direction: column;
+            width: 220px;
+            min-width: 220px;
+            height: 100%;
+            min-height: 0;
+        }
+
+        .center-dash {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 0;
+            gap: 1rem;
+        }
+
+        .sidebar-right {
+            display: flex;
+            flex-direction: column;
+            width: 285px;
+            min-width: 285px;
+            height: 100%;
+            min-height: 0;
+        }
+
+        .simulation-box {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-start;
+            gap: 0.4rem;
+            background: var(--box-bg);
+            border: 1px solid var(--glass-border);
+            padding: 0.8rem;
+            border-radius: 0.5rem;
+            backdrop-filter: blur(8px);
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .simulation-box::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .simulation-box::-webkit-scrollbar-thumb {
+            background: #576679;
+            border-radius: 2px;
+        }
+
+        .sim-title {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            margin-right: 0.5rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .terminal-panel {
+            width: 100%;
+            flex: 1;
+            background: var(--log-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background: var(--terminal-header);
+            border-bottom: 1px solid var(--glass-border);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        .terminal-header button {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #cbd5e1;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .terminal-header button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .client-logs {
+            flex: 1;
+            padding: 0.8rem 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            font-family: 'JetBrains Mono', monospace;
+            min-height: 0;
+        }
+
+        .client-logs::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .client-logs::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .client-logs::-webkit-scrollbar-thumb {
+            background: #576679;
+            border-radius: 3px;
+        }
+
+        .log-entry {
+            margin-bottom: 0.5rem;
+        }
+
+        .workspace {
+            position: relative;
+            margin: auto 0;
+            padding: 0;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+            transform: scale(0.85);
+            /* zoom out to fit visually */
+            transform-origin: center center;
+            max-height: 100%;
+        }
+
+        /* Override margin for center focus */
+    </style>
+</head>
+
+<body>
+    <div class="top-navbar">
+        <div class="brand">
+            <h1>>_ GIT SYSTEM</h1>
+        </div>
+        <div
+            style="flex:1; margin-right:20px;text-align:center; color:var(--text-muted); font-weight:600; font-size:1.4rem; letter-spacing:0.05em;">
+            Arquitectura i Comandes Git
+        </div>
+        <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Canviar Tema" onclick="toggleTheme()"
+            title="Canviar Mode Clar/Fosc">
+            <i class="fa-solid fa-sun"></i>
+        </button>
+    </div>
+
+    <div class="main-dashboard">
+        <!-- Col 1: Config (Left) -->
+        <div class="sidebar-left">
+            <div class="simulation-box">
+                <span class="sim-title" style="margin-bottom: 0.5rem; display:block; color: #f8fafc;"><i
+                        class="fa-solid fa-terminal"></i> Accions:</span>
+
+                <div class="tabs" style="display:flex; width: 100%; margin-bottom: 0.8rem;">
+                    <button class="tab-btn active tab-git" id="tab-git" onclick="switchTab('GIT')"
+                        style="border-radius: 999px 0 0 999px;">GIT</button>
+                    <button class="tab-btn tab-docker" id="tab-docker" onclick="switchTab('DOCKER')"
+                        style="border-radius: 0 999px 999px 0;">DOCKER <i class="fa-brands fa-docker"
+                            style="margin-left:4px;"></i></button>
+                </div>
+
+                <div class="controls" id="panel-git"
+                    style="display: flex; flex-direction: column; width: 100%; gap: 0.5rem; margin-bottom: 1rem;">
+                    <button class="btn btn-clone" onclick="playAnim('CLONE')" style="max-width: 100%;">git
+                        clone</button>
+                    <button class="btn btn-init" onclick="playAnim('INIT')" style="max-width: 100%;">git init</button>
+
+                    <div style="display: flex; gap: 0.3rem; width: 100%;">
+                        <button class="btn btn-add" onclick="playAnim('ADD')"
+                            style="flex:1; margin:0; max-width: 100%;">git add</button>
+                        <button class="btn btn-commit" onclick="playAnim('COMMIT')"
+                            style="flex:1; margin:0; max-width: 100%;">git commit</button>
+                    </div>
+
+                    <div style="border-top: 1px solid var(--glass-border); width: 100%; margin: 0.1rem 0;"></div>
+
+                    <button class="btn btn-branch" onclick="playAnim('BRANCH')"
+                        style="max-width: 100%; display:flex; justify-content:center; align-items:center;"><i
+                            class="fa-solid fa-code-branch" style="margin-right:5px;"></i> git branch</button>
+                    <button class="btn btn-status" onclick="playAnim('STATUS')" style="max-width: 100%;">git
+                        status</button>
+
+                    <div style="border-top: 1px solid var(--glass-border); width: 100%; margin: 0.1rem 0;"></div>
+
+                    <button class="btn btn-remote" onclick="playAnim('REMOTE')" style="max-width: 100%;">remote
+                        add</button>
+
+                    <div style="border-top: 1px solid var(--glass-border); width: 100%; margin: 0.1rem 0;"></div>
+
+                    <div style="display: flex; gap: 0.3rem; width: 100%;">
+                        <button class="btn btn-push" onclick="playAnim('PUSH')"
+                            style="flex:1; margin:0; max-width: 100%;">push</button>
+                        <button class="btn btn-fetch" onclick="playAnim('FETCH')"
+                            style="flex:1; margin:0; max-width: 100%;">fetch</button>
+                    </div>
+
+                    <div style="display: flex; gap: 0.3rem; width: 100%;">
+                        <button class="btn btn-merge" onclick="playAnim('MERGE')"
+                            style="flex:1; margin:0; max-width: 100%;">merge</button>
+                        <button class="btn btn-pull-dev" onclick="playAnim('PULL_DEV')"
+                            style="flex:1; margin:0; max-width: 100%;">pull</button>
+                    </div>
+
+                    <button class="btn btn-pr" style="display: none; max-width: 100%; margin-top:0.4rem;"
+                        onclick="playAnim('MERGE_PR')"><i class="fa-solid fa-code-pull-request"></i> Merge PR</button>
+                    <button class="btn btn-pull" style="display: none; max-width: 100%; margin-top:0.4rem;"
+                        onclick="playAnim('PULL')">git pull Prod</button>
+
+                    <div style="border-top: 1px solid var(--glass-border); width: 100%; margin: 0.5rem 0;"></div>
+
+                    <button class="btn"
+                        style="max-width: 100%; border-color: rgba(239, 68, 68, 0.5); color: #fca5a5; padding:0.4rem;"
+                        onclick="resetSimulation()"><i class="fa-solid fa-rotate-right"></i> Reset</button>
+                </div>
+
+                <div class="controls" id="panel-docker"
+                    style="display: none; flex-direction: column; width: 100%; gap: 0.5rem; margin-bottom: 1rem;">
+                    <button class="btn btn-d-build" onclick="playAnim('D_BUILD')" style="max-width: 100%;">docker
+                        build</button>
+                    <button class="btn btn-d-push" onclick="playAnim('D_PUSH')" style="max-width: 100%;">docker
+                        push</button>
+
+                    <div style="border-top: 1px solid var(--glass-border); width: 100%; margin: 0.1rem 0;"></div>
+
+                    <button class="btn btn-d-pull" style="display: none; max-width: 100%;"
+                        onclick="playAnim('D_PULL')">docker pull</button>
+                    <button class="btn btn-d-run" style="display: none; max-width: 100%;"
+                        onclick="playAnim('D_RUN')">docker run</button>
+
+                    <div style="border-top: 1px solid var(--glass-border); width: 100%; margin: 0.5rem 0;"></div>
+                    <button class="btn"
+                        style="max-width: 100%; border-color: rgba(239, 68, 68, 0.5); color: #fca5a5; padding:0.4rem;"
+                        onclick="resetSimulation()"><i class="fa-solid fa-rotate-right"></i> Reset</button>
+                </div>
+
+                <span class="sim-title" style="margin-bottom: 0.2rem; display:block;"><i
+                        class="fa-solid fa-user-astronaut"></i> Context Actiu:</span>
+
+                <div class="dev-selector"
+                    style="display:flex; flex-direction:column; background:transparent; border:none; padding:0; gap:0.3rem; width: 100%;">
+                    <button class="dev-btn active" id="btn-dev1" onclick="switchDev(1)"
+                        style="width: 100%; text-align: left; padding: 0.5rem; display:flex; gap:0.5rem; align-items:center;"><i
+                            class="fa-solid fa-laptop-code"></i> PC Dev 1</button>
+                    <button class="dev-btn" id="btn-dev2" onclick="switchDev(2)"
+                        style="width: 100%; text-align: left; padding: 0.5rem; display:flex; gap:0.5rem; align-items:center;"><i
+                            class="fa-solid fa-laptop"></i> PC Dev 2</button>
+                    <button class="dev-btn" id="btn-prod" onclick="switchDev('prod')"
+                        style="width: 100%; text-align: left; padding: 0.5rem; display:flex; gap:0.5rem; align-items:center;"><i
+                            class="fa-solid fa-server"></i> Prod Server</button>
+                </div>
+
+                <div style="border-top: 1px solid var(--glass-border); width: 100%; margin: 0.5rem 0;"></div>
+
+                <div style="margin-top: 1rem; display:flex; align-items:center; justify-content:center;">
+                    <label
+                        style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; background:var(--btn-bg); padding:0.4rem 0.8rem; border-radius:0.4rem; border:1px solid var(--glass-border); font-size:0.8rem; font-weight:600; color:var(--text-main);">
+                        <input type="checkbox" id="cicd-check" style="accent-color:#eab308; width:16px; height:16px;"
+                            checked>
+                        <i class="fa-solid fa-bolt" style="color:#eab308"></i> Autodeploy CI/CD
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Col 2: Center Workspace (Animation) -->
+        <div class="center-dash" style="align-items:center; justify-content:center;">
+            <div class="workspace" id="workspace">
+                <svg class="svg-lines" id="svgLines">
+                    <!-- Lines generated dynamically via JS to connect elements -->
+                </svg>
+
+                <div class="packet" id="packet"></div>
+
+                <!-- Footer Crèdits -->
+                <div
+                    style="position: absolute; bottom: 5px; right: 5px; color: var(--text-muted); font-size: 0.65rem; font-family: 'Inter', sans-serif; text-align: right; z-index: 50; padding: 4px 8px; border-radius: 4px; background: var(--bg-dark); border: 1px solid var(--glass-border);">
+                    Creat per <strong>@CMB</strong> <br>
+                    Institut Montilivi - Girona <br>
+                    <a href="https://opensource.org/licenses/MIT" target="_blank"
+                        style="color:#0ea5e9; text-decoration:none;">Llicència Lliure (MIT)</a>
+                </div>
+
+                <!-- Left Column: Developers -->
+                <div class="developers-col">
+                    <!-- Dev 1 -->
+                    <div class="entity developer active-dev" id="dev1">
+                        <div class="dev-header"><i class="fa-solid fa-laptop-code"></i> PC Desenvolupador 1 <span
+                                class="branch-badge" id="dev1-branch"><i class="fa-solid fa-code-branch"></i>
+                                main</span></div>
+                        <div class="git-stages">
+                            <div class="stage-box" id="dev1-wd">
+                                <div class="stage-title"><span>Àrea de Treball</span><span
+                                        class="stage-action">init/clone</span></div>
+                                <div class="file-item" style="background:#576679; width:40%;"></div>
+                                <div class="file-item" style="background:#576679; width:60%;"></div>
+                                <div class="file-item" style="background:#576679; width:30%;"></div>
+                            </div>
+                            <div class="stage-box" id="dev1-st">
+                                <div class="stage-title"><span>Preparació (Staging)</span><span class="stage-action">git
+                                        add</span></div>
+                                <div class="file-item" id="dev1-st-f1"></div>
+                                <div class="file-item" id="dev1-st-f2"></div>
+                            </div>
+                            <div class="stage-box" id="dev1-lr">
+                                <div class="stage-title"><span>Repositori Local</span><span class="stage-action">git
+                                        commit</span></div>
+                                <div class="repo-commits" id="dev1-commits" style="min-height:30px">
+                                    <!-- Commits go here -->
+                                </div>
+                            </div>
+                            <div class="stage-box" id="dev1-docker" style="margin-top:0.3rem;">
+                                <div class="stage-title"><span>Imatge Local</span><span class="stage-action">docker
+                                        build</span></div>
+                                <div id="dev1-img" class="docker-image"><i class="fa-brands fa-docker"
+                                        style="margin-right:4px;"></i> latest</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dev 2 -->
+                    <div class="entity developer" id="dev2">
+                        <div class="dev-header"><i class="fa-solid fa-laptop"></i> PC Desenvolupador 2 <span
+                                class="branch-badge" id="dev2-branch"><i class="fa-solid fa-code-branch"></i>
+                                main</span></div>
+                        <div class="git-stages">
+                            <div class="stage-box" id="dev2-wd">
+                                <div class="stage-title"><span>Àrea de Treball</span><span
+                                        class="stage-action">init/clone</span></div>
+                                <div class="file-item" style="background:#576679; width:50%;"></div>
+                                <div class="file-item" style="background:#576679; width:20%;"></div>
+                                <div class="file-item" style="background:#576679; width:40%;"></div>
+                            </div>
+                            <div class="stage-box" id="dev2-st">
+                                <div class="stage-title"><span>Preparació (Staging)</span><span class="stage-action">git
+                                        add</span></div>
+                                <div class="file-item" id="dev2-st-f1"></div>
+                                <div class="file-item" id="dev2-st-f2"></div>
+                            </div>
+                            <div class="stage-box" id="dev2-lr">
+                                <div class="stage-title"><span>Repositori Local</span><span class="stage-action">git
+                                        commit</span></div>
+                                <div class="repo-commits" id="dev2-commits" style="min-height:30px">
+                                    <!-- Commits go here -->
+                                </div>
+                            </div>
+                            <div class="stage-box" id="dev2-docker" style="margin-top:0.3rem;">
+                                <div class="stage-title"><span>Imatge Local</span><span class="stage-action">docker
+                                        build</span></div>
+                                <div id="dev2-img" class="docker-image"><i class="fa-brands fa-docker"
+                                        style="margin-right:4px;"></i> latest</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center Column: Remote -->
+                <div class="remote-col">
+                    <div class="entity remote-repo" id="remoteRepo">
+                        <i class="fa-brands fa-github entity-icon" style="color:#ef4444"></i>
+                        <div class="entity-title">Repositori Remot <span class="branch-badge"
+                                style="display: block; width: fit-content; margin: 4px auto 0;"><i
+                                    class="fa-solid fa-code-branch"></i> main</span></div>
+
+                        <div class="server-files" style="min-height:40px; margin-bottom: 5px;">
+                            <div class="s-file" style="background:#576679"></div>
+                            <div class="s-file" style="background:#576679"></div>
+                        </div>
+
+                        <div class="repo-commits" id="remote-commits">
+                            <div class="commit-row visible init-commit" style="border-color:#64748b" data-id="init">
+                                <i class="fa-solid fa-code-commit"></i> <span>a1b2c3d</span> Initial
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="entity container-registry" id="registry">
+                        <i class="fa-brands fa-docker entity-icon" style="color:#0ea5e9"></i>
+                        <div class="entity-title">Container Registry</div>
+                        <div class="repo-commits" id="registry-images"
+                            style="min-height:45px; justify-content:center; align-items:center; display:flex;">
+                            <span id="registry-empty-text" style="font-size:0.6rem; color:var(--stage-text);">Sense
+                                Imatges</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Production -->
+                <div class="server-col">
+                    <div class="entity prod-server" id="prodServer">
+                        <i class="fa-solid fa-server entity-icon" style="color:#8b5cf6"></i>
+                        <div class="entity-title" style="display:flex; flex-direction:column; align-items:center;">
+                            Servidor Web
+                            Prod <span class="branch-badge" id="prod-branch"
+                                style="display: block; width: fit-content; margin: 4px auto 0;"><i
+                                    class="fa-solid fa-code-branch"></i> main</span></div>
+                        <div class="server-files" id="prodFiles" style="margin-bottom:8px;">
+                            <div class="s-file" style="background:#64748b"></div>
+                            <div class="s-file" style="background:#64748b"></div>
+                            <div class="s-file" style="background:#64748b"></div>
+                        </div>
+                        <div id="prod-container" style="width:100%;">
+                            <div class="running-container" id="prod-run-img">
+                                <i class="fa-solid fa-play" style="margin-right:5px; font-size:0.6rem;"></i>
+                                app:latest
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Col 3: Terminal Logs (Right) -->
+        <div class="sidebar-right">
+            <div class="terminal-panel">
+                <div class="terminal-header">
+                    <span>>_ Network / Logs</span>
+                    <button
+                        onclick="document.getElementById('terminalLogs').innerHTML = '<div class=\'log-entry\' style=\'color:#64748b;font-size:0.75rem;\'>-- System Ready --</div>'"><i
+                            class="fa-solid fa-eraser"></i> Clear</button>
+                </div>
+                <div class="client-logs" id="terminalLogs">
+                    <div class="log-entry" style="color:#64748b;font-size:0.75rem;">-- System Ready --</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isAnimating = false;
+        let currentDev = 1;
+        let stagingHasFiles = { 1: false, 2: false };
+        let isInit = { 1: false, 2: false };
+        let hasCommits = { 1: false, 2: false };
+        let hasRemote = { 1: false, 2: false };
+
+        let hasDockerImage = { 1: false, 2: false };
+        let registryHasImage = false;
+        let prodHasImage = false;
+        let prodIsRunning = false;
+
+        // Tab system
+        function switchTab(tab) {
+            document.getElementById('tab-git').classList.remove('active');
+            document.getElementById('tab-docker').classList.remove('active');
+            document.getElementById('panel-git').style.display = 'none';
+            document.getElementById('panel-docker').style.display = 'none';
+
+            if (tab === 'GIT') {
+                document.getElementById('tab-git').classList.add('active');
+                document.getElementById('panel-git').style.display = 'flex';
+            } else {
+                document.getElementById('tab-docker').classList.add('active');
+                document.getElementById('panel-docker').style.display = 'flex';
+            }
+        }
+
+        // Logging system virtualizer
+        const terminalLogs = document.getElementById('terminalLogs');
+        let currentLog = { title: '', color: '', desc: '', code: '' };
+
+        function flushLog() {
+            if (!currentLog.title && !currentLog.desc && !currentLog.code) return;
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `
+                <div style="color:${currentLog.color || '#38bdf8'}; font-weight:bold; margin-bottom:4px; font-size:0.75rem;">>_ ${currentLog.title}</div>
+                ${currentLog.code ? `<div style="color:#fca5a5; background:rgba(15,23,42,0.8); padding:4px 6px; border-radius:3px; margin-bottom:4px; font-family:'JetBrains Mono', monospace; font-size:0.65rem; border:1px solid rgba(255,255,255,0.05);">${currentLog.code}</div>` : ''}
+                <div style="color:var(--text-muted); font-size:0.7rem; line-height:1.4;">${currentLog.desc}</div>
+                <div style="border-bottom: 1px solid rgba(255,255,255,0.05); margin: 8px 0;"></div>
+            `;
+            // Add to top of terminal
+            if (terminalLogs.firstChild) {
+                terminalLogs.insertBefore(logEntry, terminalLogs.firstChild);
+            } else {
+                terminalLogs.appendChild(logEntry);
+            }
+
+            // Clean up old struct
+            currentLog = { title: '', color: '', desc: '', code: '' };
+        }
+
+        const infoTitle = {
+            set innerText(val) { currentLog.title = val; },
+            get innerText() { return currentLog.title; },
+            style: {
+                set color(val) { currentLog.color = val; },
+                get color() { return currentLog.color; }
+            }
+        };
+        const infoDesc = { set innerText(val) { currentLog.desc = val; } };
+        const infoCode = {
+            set innerText(val) { currentLog.code = val; flushLog(); },
+            style: { set color(val) { }, get color() { return ''; } }
+        };
+        const packetEl = document.getElementById('packet');
+
+        // Configs
+        const gitConfig = {
+            'CLONE': {
+                color: '#a855f7',
+                title: 'git clone - Clonar Repositori',
+                desc: "Descarrega una còpia COMPLETA del repositori remot al teu ordinador. Això crea la carpeta .git, baixa tots els commits i configura l'àrea de treball automàticament.",
+                code: 'git clone https://github.com/project.git'
+            },
+            'INIT': {
+                color: '#6366f1',
+                title: 'git init - Inicialitza',
+                desc: "Crea un nou repositori GIT buit a la carpeta local (.git). A partir d'aquí, GIT pot fer el seguiment dels canvis als fitxers de l'Àrea de Treball.",
+                code: 'git init'
+            },
+            'ADD': {
+                color: '#eab308',
+                title: 'git add - Preparació',
+                desc: "Afegeix els canvis dels fitxers (nous, modificats o esborrats) a l'àrea de preparació (Staging area), preparant-los pel proper commit.",
+                code: 'git add fitxer.html'
+            },
+            'COMMIT': {
+                color: '#22c55e',
+                title: 'git commit - Desa al Local',
+                desc: "Crea una captura permanent (commit) dels fitxers que estan a l'àrea de preparació i ho desa al repositori local.",
+                code: 'git commit -m "Nova funcionalitat"'
+            },
+            'REMOTE': {
+                color: '#f97316',
+                title: 'git remote add - Enllaça Remot',
+                desc: "Afegeix l'URL (per ex. a GitHub o GitLab) com a destí etiquetat amb el nom 'origin'. Connecta el teu PC aïllat amb l'exterior.",
+                code: 'git remote add origin https://...git'
+            },
+            'PUSH': {
+                color: '#ef4444',
+                title: 'git push - Envia al Remot',
+                desc: "Envia els commits locals (branques i dades) al repositori remot (ex. GitHub/GitLab) per compartir-los i guardar-ne la còpia de seguretat.",
+                code: 'git push origin main'
+            },
+            'FETCH': {
+                color: '#3b82f6',
+                title: 'git fetch - Descarrega canvis',
+                desc: "Comprova i descarrega els canvis del repositori remot al repositori local sense fusionar-los amb la teva àrea de treball.",
+                code: 'git fetch origin'
+            },
+            'MERGE': {
+                color: '#14b8a6',
+                title: 'git merge - Fusiona Canvis',
+                desc: "Fusiona els canvis descarregats del repositori remot cap a la teva branca local i els aplica directament a la teva Àrea de Treball.",
+                code: 'git merge origin/main'
+            },
+            'PULL_DEV': {
+                color: '#06b6d4',
+                title: 'git pull - Descarrega i Fusiona',
+                desc: "Equival a executar 'git fetch' seguit de 'git merge'. Descarrega els canvis del remot i els fusiona automàticament amb els teus fitxers locals.",
+                code: 'git pull origin main'
+            },
+            'PULL': {
+                color: '#8b5cf6',
+                title: 'git pull - Actualitza Producció',
+                desc: "El servidor de producció descarrega (fetch) i fusiona (merge) automàticament els darrers canvis del repositori remot per desplegar la nova versió web.",
+                code: 'git pull origin main'
+            },
+            'STATUS': {
+                color: '#94a3b8',
+                title: 'git status - Estat del Repositori',
+                desc: "Mostra l'estat de l'arbre de treball i de l'àrea de preparació. Així saps quins fitxers tenen canvis i quins estan llestos per fer commit.",
+                code: 'git status'
+            },
+            'BRANCH': {
+                color: '#f472b6',
+                title: 'git branch - Gestió de Branques',
+                desc: "Crea una nova branca i s'hi mou (checkout). Serveix per treballar en noves funcionalitats de manera independent a la versió estable principal (main).",
+                code: 'git checkout -b feature'
+            },
+            'MERGE_PR': {
+                color: '#fbbf24',
+                title: 'Merge Pull Request (Remot)',
+                desc: "Aprova i fusiona els canvis enviats des de la branca 'feature' cap a la branca principal (main/prod) al servidor de proves.",
+                code: '(Acció en plataforma GitHub/GitLab)'
+            },
+            'D_BUILD': {
+                color: '#0ea5e9',
+                title: 'docker build - Crear Imatge',
+                desc: "Empaqueta tot el teu codi, llibreries i entorn d'execució en una única imatge Docker portàtil.",
+                code: 'docker build -t app:latest .'
+            },
+            'D_PUSH': {
+                color: '#0284c7',
+                title: 'docker push - Pujar Imatge',
+                desc: "Envia la imatge creada localment cap al Container Registry global, deixant-la disponible per a qualsevol servidor.",
+                code: 'docker push registry.com/app:latest'
+            },
+            'D_PULL': {
+                color: '#0369a1',
+                title: 'docker pull - Descarregar Imatge',
+                desc: "El servidor de producció descarrega l'última imatge disponible des del Container Registry.",
+                code: 'docker pull registry.com/app:latest'
+            },
+            'D_RUN': {
+                color: '#38bdf8',
+                title: 'docker run - Executar Contenidor',
+                desc: "Inicia l'aplicació creant un contenidor aïllat a partir de la imatge descarregada al servidor.",
+                code: 'docker run -d -p 80:80 app:latest'
+            }
+        };
+
+        function switchDev(devNum) {
+            if (isAnimating) return;
+            currentDev = devNum;
+
+            // UI classes
+            document.getElementById('btn-dev1').classList.remove('active');
+            document.getElementById('btn-dev2').classList.remove('active');
+            document.getElementById('btn-prod').classList.remove('active');
+            document.getElementById(devNum === 'prod' ? 'btn-prod' : `btn-dev${devNum}`).classList.add('active');
+
+            document.getElementById('dev1').classList.remove('active-dev');
+            document.getElementById('dev2').classList.remove('active-dev');
+            document.getElementById('prodServer').classList.remove('active-dev');
+
+            if (devNum === 'prod') {
+                document.getElementById('prodServer').classList.add('active-dev');
+                infoTitle.innerText = `Servidor de Producció actiu`;
+                infoTitle.style.color = "#a78bfa";
+                infoDesc.innerText = `Ara interactuem directament amb el servidor web de producció.`;
+                infoCode.innerText = `root@prod-server #`;
+
+                // Show/Hide specific buttons
+                document.querySelectorAll('.btn-clone, .btn-init, .btn-add, .btn-commit, .btn-remote, .btn-push, .btn-fetch, .btn-merge, .btn-pull-dev, .btn-status, .btn-branch, .btn-pr').forEach(b => b.style.display = 'none');
+                document.querySelector('.btn-pull').style.display = 'inline-block';
+
+                // Docker visibility for Prod
+                document.querySelector('.btn-d-build').style.display = 'none';
+                document.querySelector('.btn-d-push').style.display = 'none';
+                document.querySelector('.btn-d-pull').style.display = 'inline-block';
+                document.querySelector('.btn-d-run').style.display = 'inline-block';
+            } else {
+                document.getElementById(`dev${devNum}`).classList.add('active-dev');
+                infoTitle.innerText = `Desenvolupador ${devNum} actiu`;
+                infoTitle.style.color = "#38bdf8";
+                infoDesc.innerText = `Ara les comandes interactuaran amb el repositori del PC del Desenvolupador ${devNum}.`;
+                infoCode.innerText = `usuari@pc-dev${devNum} ~$`;
+
+                // Show/Hide specific buttons
+                document.querySelectorAll('.btn-clone, .btn-init, .btn-add, .btn-commit, .btn-remote, .btn-push, .btn-fetch, .btn-merge, .btn-pull-dev, .btn-status, .btn-branch').forEach(b => b.style.display = 'inline-block');
+                document.querySelector('.btn-pull').style.display = 'none';
+
+                // Docker visibility for Dev
+                document.querySelector('.btn-d-build').style.display = 'inline-block';
+                document.querySelector('.btn-d-push').style.display = 'inline-block';
+                document.querySelector('.btn-d-pull').style.display = 'none';
+                document.querySelector('.btn-d-run').style.display = 'none';
+
+                // Only show PR button if feature branch is active on remote
+                const remoteBranch = document.querySelector('#remoteRepo .branch-badge');
+                if (remoteBranch && remoteBranch.innerText.toLowerCase().includes('feature')) {
+                    document.querySelector('.btn-pr').style.display = 'inline-block';
+                } else {
+                    document.querySelector('.btn-pr').style.display = 'none';
+                }
+            }
+
+            // Draw lines again so paths refresh if needed visually
+            drawNetworkLines();
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function createPathLine(startX, startY, endX, endY, id) {
+            const svg = document.getElementById('svgLines');
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+
+            // Curve generating
+            const controlX1 = startX + (endX - startX) / 2;
+            const controlY1 = startY;
+            const controlX2 = startX + (endX - startX) / 2;
+            const controlY2 = endY;
+
+            const d = `M ${startX} ${startY} C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${endX} ${endY}`;
+            path.setAttribute('d', d);
+            path.classList.add('path-line');
+            if (id) path.setAttribute('id', id);
+            svg.appendChild(path);
+            return path;
+        }
+
+        // Draw static lines
+        function drawNetworkLines() {
+            const svg = document.getElementById('svgLines');
+            svg.innerHTML = '';
+
+            const wsRect = document.getElementById('workspace').getBoundingClientRect();
+            const scale = 0.85; // Match CSS transform: scale(0.85)
+
+            const elCenter = (el) => {
+                const rect = el.getBoundingClientRect();
+                return {
+                    x: (rect.left + rect.width / 2 - wsRect.left) / scale,
+                    y: (rect.top + rect.height / 2 - wsRect.top) / scale
+                };
+            };
+
+            const getRightEdge = (el) => {
+                const rect = el.getBoundingClientRect();
+                return {
+                    x: (rect.right - wsRect.left) / scale,
+                    y: (rect.top + rect.height / 2 - wsRect.top) / scale
+                };
+            };
+
+            const getLeftEdge = (el) => {
+                const rect = el.getBoundingClientRect();
+                return {
+                    x: (rect.left - wsRect.left) / scale,
+                    y: (rect.top + rect.height / 2 - wsRect.top) / scale
+                };
+            };
+
+            const dev1 = document.getElementById('dev1-lr');
+            const dev2 = document.getElementById('dev2-lr');
+            const remote = document.getElementById('remoteRepo');
+            const prod = document.getElementById('prodServer');
+            const registry = document.getElementById('registry');
+
+            // Dev1 to Remote
+            createPathLine(getRightEdge(dev1).x, elCenter(dev1).y, getLeftEdge(remote).x, elCenter(remote).y, 'line-dev1');
+
+            // Dev2 to Remote
+            createPathLine(getRightEdge(dev2).x, elCenter(dev2).y, getLeftEdge(remote).x, elCenter(remote).y, 'line-dev2');
+
+            // Remote to Prod
+            createPathLine(getRightEdge(remote).x, elCenter(remote).y, getLeftEdge(prod).x, elCenter(prod).y - 20, 'line-prod');
+
+            // Devs to Registry
+            createPathLine(getRightEdge(dev1).x, elCenter(dev1).y + 30, getLeftEdge(registry).x, elCenter(registry).y, 'line-dev1-reg');
+            createPathLine(getRightEdge(dev2).x, elCenter(dev2).y + 30, getLeftEdge(registry).x, elCenter(registry).y, 'line-dev2-reg');
+
+            // Registry to Prod
+            createPathLine(getRightEdge(registry).x, elCenter(registry).y, getLeftEdge(prod).x, elCenter(prod).y + 20, 'line-prod-reg');
+        }
+
+        window.addEventListener('resize', drawNetworkLines);
+        setTimeout(drawNetworkLines, 100);
+
+        function animatePacket(startX, startY, endX, endY, color, icon) {
+            return new Promise(resolve => {
+                packetEl.style.transition = 'none';
+                packetEl.style.left = startX + 'px';
+                packetEl.style.top = startY + 'px';
+                packetEl.style.background = color;
+                packetEl.innerHTML = icon;
+                packetEl.style.opacity = '1';
+
+                // Force reflow
+                packetEl.offsetHeight;
+
+                packetEl.style.transition = 'all 1.2s cubic-bezier(0.4, 0, 0.2, 1)';
+                packetEl.style.left = endX + 'px';
+                packetEl.style.top = endY + 'px';
+
+                setTimeout(() => {
+                    packetEl.style.opacity = '0';
+                    resolve();
+                }, 1200);
+            });
+        }
+
+        function getPos(el) {
+            const wsRect = document.getElementById('workspace').getBoundingClientRect();
+            const rect = el.getBoundingClientRect();
+            const scale = 0.85;
+            return {
+                x: (rect.left + rect.width / 2 - wsRect.left) / scale,
+                y: (rect.top + rect.height / 2 - wsRect.top) / scale
+            };
+        }
+
+        async function playAnim(action) {
+            if (isAnimating) return;
+            isAnimating = true;
+
+            // UI Reset
+            document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+            // If action is specific like clone etc, activate the button
+            const actionBtn = document.querySelector(`.btn-${action.toLowerCase()}`);
+            if (actionBtn) actionBtn.classList.add('active');
+
+            const config = gitConfig[action];
+            infoTitle.innerText = config.title;
+            infoTitle.style.color = config.color;
+            infoDesc.innerText = config.desc;
+            infoCode.innerText = config.code;
+            infoCode.style.color = "#fca5a5"; // default code color
+
+            const devWd = document.getElementById(`dev${currentDev}-wd`);
+            const devSt = document.getElementById(`dev${currentDev}-st`);
+            const devLr = document.getElementById(`dev${currentDev}-lr`);
+            const remote = document.getElementById('remoteRepo');
+            const prod = document.getElementById('prodServer');
+            const registry = document.getElementById('registry');
+
+            // Reset highlights
+            document.querySelectorAll('.stage-box, .entity').forEach(e => {
+                e.className = e.className.replace(/highlight-\w+/g, '');
+            });
+
+            if (action === 'CLONE') {
+                if (isInit[currentDev] && (stagingHasFiles[currentDev] || hasCommits[currentDev])) {
+                    infoTitle.innerText = "Error al Clonar";
+                    infoTitle.style.color = "#ef4444";
+                    infoDesc.innerText = "No pots clonar un repositori si el teu PC ja en té un amb canvis a staging o commits locals.";
+                    infoCode.innerText = "fatal: destination path already exists and is not an empty directory.";
+                    isAnimating = false;
+                    return;
+                }
+
+                isInit[currentDev] = true;
+                hasCommits[currentDev] = true;
+                stagingHasFiles[currentDev] = false;
+                hasRemote[currentDev] = true;
+
+                remote.classList.add('highlight-clone');
+                const remPos = getPos(remote);
+                const devPos = getPos(devLr);
+                const lineId = `line-dev${currentDev}`;
+                const connectingLine = document.getElementById(lineId);
+
+                if (connectingLine) {
+                    connectingLine.style.stroke = 'rgba(168, 85, 247, 0.8)';
+                    connectingLine.style.strokeWidth = '3';
+                }
+
+                await animatePacket(remPos.x, remPos.y, devPos.x, devPos.y, '#a855f7', '<i class="fa-solid fa-copy"></i>');
+
+                if (connectingLine) {
+                    connectingLine.style.stroke = 'rgba(148, 163, 184, 0.3)';
+                    connectingLine.style.strokeWidth = '2';
+                }
+
+                devLr.classList.add('highlight-clone');
+                devWd.classList.add('highlight-clone');
+
+                // Clone commits logic
+                const devCommits = document.getElementById(`dev${currentDev}-commits`);
+                devCommits.innerHTML = ''; // Start fresh
+
+                const remoteCommitsList = document.querySelectorAll('#remote-commits .commit-row');
+                for (const rc of remoteCommitsList) {
+                    const commitEl = document.createElement('div');
+                    commitEl.className = 'commit-row';
+                    commitEl.style.borderColor = '#a855f7';
+                    commitEl.innerHTML = rc.innerHTML;
+                    devCommits.appendChild(commitEl);
+                    await sleep(200);
+                    commitEl.classList.add('visible');
+                }
+
+                await sleep(500);
+
+                // Clone working dir logic
+                const files = devWd.querySelectorAll('.file-item');
+                files.forEach((f, index) => {
+                    setTimeout(() => {
+                        f.style.width = (70 + Math.random() * 20) + '%';
+                        f.style.background = '#8b5cf6';
+                        setTimeout(() => {
+                            f.style.background = '#cbd5e1';
+                        }, 400);
+                    }, index * 200);
+                });
+
+                await sleep(800);
+            }
+            if (action === 'INIT') {
+                isInit[currentDev] = true;
+                devWd.classList.add('highlight-init');
+                const files = devWd.querySelectorAll('.file-item');
+                files[0].style.width = '80%';
+                files[0].style.background = '#6366f1';
+                if (files[1]) {
+                    files[1].style.width = '90%';
+                    files[1].style.background = '#6366f1';
+                }
+
+                await sleep(1000);
+                files.forEach(f => f.style.background = '#e2e8f0');
+            }
+            else if (action === 'ADD') {
+                if (!isInit[currentDev]) {
+                    infoTitle.innerText = "Repositori no inicialitzat";
+                    infoTitle.style.color = "#ef4444";
+                    infoDesc.innerText = "No es pot afegir cap fitxer; cal inicialitzar el repositori amb 'git init' o clonant-ne un amb 'git clone'.";
+                    infoCode.innerText = "fatal: not a git repository (or any of the parent directories): .git";
+                    isAnimating = false;
+                    return;
+                }
+                stagingHasFiles[currentDev] = true;
+                devWd.classList.add('highlight-add');
+                devSt.classList.add('highlight-add');
+
+                const f1 = document.getElementById(`dev${currentDev}-st-f1`);
+                const f2 = document.getElementById(`dev${currentDev}-st-f2`);
+
+                f1.style.width = '80%';
+                f1.style.background = '#eab308';
+                await sleep(400);
+                f2.style.width = '90%';
+                f2.style.background = '#eab308';
+                await sleep(800);
+            }
+            else if (action === 'COMMIT') {
+                if (!isInit[currentDev]) {
+                    infoTitle.innerText = "Repositori no inicialitzat";
+                    infoTitle.style.color = "#ef4444";
+                    infoDesc.innerText = "No pots fer commit sense tenir el repositori inicialitzat.";
+                    infoCode.innerText = "fatal: not a git repository";
+                    isAnimating = false;
+                    return;
+                }
+                if (!stagingHasFiles[currentDev]) {
+                    infoTitle.innerText = "No hi ha res a commitejar";
+                    infoTitle.style.color = "#ef4444";
+                    infoDesc.innerText = "L'àrea de preparació està buida. Sisplau, executa 'git add' primer per afegir els fitxers modificats.";
+                    infoCode.innerText = "git status: untracked files present";
+
+                    // Highlight the working directory to hint the user
+                    devWd.classList.add('highlight-push');
+                    setTimeout(() => {
+                        devWd.classList.remove('highlight-push');
+                    }, 1000);
+
+                    isAnimating = false;
+                    return;
+                }
+
+                stagingHasFiles[currentDev] = false;
+                hasCommits[currentDev] = true;
+                devSt.classList.add('highlight-commit');
+                devLr.classList.add('highlight-commit');
+
+                const f1 = document.getElementById(`dev${currentDev}-st-f1`);
+                const f2 = document.getElementById(`dev${currentDev}-st-f2`);
+                f1.style.background = '#64748b';
+                f2.style.background = '#64748b';
+
+                await sleep(300);
+                f1.style.width = '0%';
+                f2.style.width = '0%';
+
+                const hash = Math.random().toString(16).substring(2, 9);
+                const commitsContainer = document.getElementById(`dev${currentDev}-commits`);
+
+                const commitEl = document.createElement('div');
+                commitEl.className = 'commit-row';
+                commitEl.style.borderColor = '#22c55e';
+                commitEl.innerHTML = `<i class="fa-solid fa-code-commit"></i> <span>${hash}</span> Fix bugs dev${currentDev}`;
+
+                commitsContainer.appendChild(commitEl);
+
+                await sleep(300);
+                commitEl.classList.add('visible');
+                await sleep(800);
+            }
+            else if (action === 'REMOTE') {
+                if (!isInit[currentDev]) {
+                    infoTitle.innerText = "Repositori no inicialitzat";
+                    infoTitle.style.color = "#ef4444";
+                    infoDesc.innerText = "No pots afegir un remot si el PC no té un repositori git creat.";
+                    infoCode.innerText = "fatal: not a git repository";
+                    isAnimating = false;
+                    return;
+                }
+                if (hasRemote[currentDev]) {
+                    infoTitle.innerText = "El remot ja existeix";
+                    infoTitle.style.color = "#ef4444";
+                    infoDesc.innerText = "El teu repositori local ja té configurat un origin (ja sigui per clone o per remote add previ).";
+                    infoCode.innerText = "fatal: remote origin already exists.";
+
+                    remote.classList.add('highlight-push');
+                    setTimeout(() => remote.classList.remove('highlight-push'), 1000);
+                    isAnimating = false;
+                    return;
+                }
+
+                hasRemote[currentDev] = true;
+                remote.classList.add('highlight-remote');
+                devLr.classList.add('highlight-remote');
+
+                const lineId = `line-dev${currentDev}`;
+                const connectingLine = document.getElementById(lineId);
+                if (connectingLine) {
+                    connectingLine.style.stroke = 'rgba(249, 115, 22, 0.8)';
+                    connectingLine.style.strokeWidth = '3';
+                    connectingLine.style.strokeDasharray = '0';
+
+                    await sleep(1000);
+
+                    connectingLine.style.stroke = 'rgba(148, 163, 184, 0.3)';
+                    connectingLine.style.strokeWidth = '2';
+                    connectingLine.style.strokeDasharray = '6, 6';
+                } else {
+                    await sleep(1000);
+                }
+            }
+            else if (action === 'PUSH') {
+                if (!hasRemote[currentDev]) {
+                    infoTitle.innerText = "Manca configuració de remot";
+                    infoTitle.style.color = "#ef4444";
+                    infoDesc.innerText = "Aquest repositori no sap on enviar els canvis. Cal fer 'git remote add' abans del 'git push'.";
+                    infoCode.innerText = "fatal: No configured push destination.";
+                    isAnimating = false;
+                    return;
+                }
+                if (!isInit[currentDev] || !hasCommits[currentDev]) {
+                    infoTitle.innerText = "Sense commits per enviar";
+                    infoTitle.style.color = "#ef4444";
+                    infoDesc.innerText = "No hi ha cap commit al repositori local per enviar. Crea'n un amb 'git commit' primer.";
+                    infoCode.innerText = "error: src refspec main does not match any";
+                    isAnimating = false;
+                    return;
+                }
+                devLr.classList.add('highlight-push');
+
+                const dPos = getPos(devLr);
+                const remPos = getPos(remote);
+
+                const lineId = `line-dev${currentDev}`;
+                const connectingLine = document.getElementById(lineId);
+                if (connectingLine) {
+                    connectingLine.style.stroke = 'rgba(239, 68, 68, 0.8)';
+                    connectingLine.style.strokeWidth = '3';
+                }
+
+                await animatePacket(dPos.x, dPos.y, remPos.x, remPos.y, '#ef4444', '<i class="fa-solid fa-cloud-arrow-up"></i>');
+
+                if (connectingLine) {
+                    connectingLine.style.stroke = 'rgba(148, 163, 184, 0.3)';
+                    connectingLine.style.strokeWidth = '2';
+                }
+
+                remote.classList.add('highlight-push');
+
+                const remoteCommits = document.getElementById('remote-commits');
+                const remoteBranchBadge = document.querySelector('#remoteRepo .branch-badge');
+                const localBranchBadge = document.getElementById(`dev${currentDev}-branch`);
+
+                // Update remote branch badge to match local
+                if (remoteBranchBadge && localBranchBadge) {
+                    remoteBranchBadge.innerHTML = localBranchBadge.innerHTML;
+                    if (localBranchBadge.innerText.toLowerCase().includes('feature')) {
+                        remoteBranchBadge.style.color = '#f472b6';
+                        remoteBranchBadge.style.borderColor = 'rgba(244, 114, 182, 0.3)';
+                        remoteBranchBadge.style.background = 'rgba(244, 114, 182, 0.1)';
+
+                        // Si estem en vista de desenvolupador, mostrem botó Merge PR
+                        if (currentDev !== 'prod') {
+                            document.querySelector('.btn-pr').style.display = 'inline-block';
+                        }
+                    } else {
+                        remoteBranchBadge.style.color = '';
+                        remoteBranchBadge.style.borderColor = '';
+                        remoteBranchBadge.style.background = '';
+                    }
+                }
+
+                // Get latest local commit from this dev
+                const localCommits = document.getElementById(`dev${currentDev}-commits`).children;
+                if (localCommits.length > 0) {
+                    const lastLocalCommit = localCommits[localCommits.length - 1].innerHTML;
+
+                    if (remoteCommits.children.length > 3) {
+                        remoteCommits.removeChild(remoteCommits.firstChild);
+                    }
+
+                    const commitEl = document.createElement('div');
+                    commitEl.className = 'commit-row';
+                    commitEl.style.borderColor = '#ef4444';
+                    commitEl.innerHTML = lastLocalCommit;
+
+                    remoteCommits.appendChild(commitEl);
+
+                    await sleep(100);
+                    commitEl.classList.add('visible');
+                } else {
+                    infoDesc.innerText = "No hi ha cap commit al repositori local per enviar!";
+                }
+
+                await sleep(800);
+            }
+            else if (action === 'FETCH' || action === 'PULL_DEV') {
+                if (!hasRemote[currentDev]) {
+                    infoTitle.innerText = "Manca configuració de remot";
+                    infoTitle.style.color = "#ef4444";
+                    infoDesc.innerText = "Aquest repositori no sap d'on obtenir els canvis. Cal fer 'git remote add' prèviament o haver fet un 'git clone'.";
+                    infoCode.innerText = "fatal: No remote repository specified.  Please, specify either a URL or a remote name.";
+                    isAnimating = false;
+                    return;
+                }
+
+                remote.classList.add('highlight-fetch');
+
+                const remPos = getPos(remote);
+                const dPos = getPos(devLr);
+
+                const lineId = `line-dev${currentDev}`;
+                const connectingLine = document.getElementById(lineId);
+                if (connectingLine) {
+                    connectingLine.style.stroke = 'rgba(59, 130, 246, 0.8)';
+                    connectingLine.style.strokeWidth = '3';
+                }
+
+                await animatePacket(remPos.x, remPos.y, dPos.x, dPos.y, action === 'FETCH' ? '#3b82f6' : '#06b6d4', '<i class="fa-solid fa-cloud-arrow-down"></i>');
+
+                if (connectingLine) {
+                    connectingLine.style.stroke = 'rgba(148, 163, 184, 0.3)';
+                    connectingLine.style.strokeWidth = '2';
+                }
+
+                devLr.classList.add('highlight-fetch');
+
+                const dCommits = document.getElementById(`dev${currentDev}-commits`);
+
+                // Get latest remote commit
+                const remoteCommits = document.getElementById('remote-commits').children;
+                if (remoteCommits.length > 0) {
+                    const lastRemoteCommit = remoteCommits[remoteCommits.length - 1].innerHTML;
+
+                    const commitEl = document.createElement('div');
+                    commitEl.className = 'commit-row';
+                    commitEl.style.borderColor = action === 'FETCH' ? '#3b82f6' : '#06b6d4';
+                    commitEl.innerHTML = lastRemoteCommit;
+
+                    dCommits.appendChild(commitEl);
+
+                    await sleep(100);
+                    commitEl.classList.add('visible');
+                }
+
+                if (action === 'PULL_DEV') {
+                    await sleep(500);
+                    // Do MERGE part automatically for PULL
+                    action = 'MERGE';
+                } else {
+                    await sleep(800);
+                }
+            }
+
+            if (action === 'MERGE') {
+                if (!isInit[currentDev]) {
+                    infoTitle.innerText = "Repositori no inicialitzat";
+                    infoTitle.style.color = "#ef4444";
+                    infoDesc.innerText = "No pots fusionar si no tens cap repositori creat.";
+                    infoCode.innerText = "fatal: not a git repository";
+                    isAnimating = false;
+                    return;
+                }
+
+                devLr.classList.add('highlight-merge');
+                devWd.classList.add('highlight-merge');
+
+                // Show file merging in Working Directory
+                const files = devWd.querySelectorAll('.file-item');
+                files.forEach((f, index) => {
+                    setTimeout(() => {
+                        f.style.width = (40 + Math.random() * 50) + '%';
+                        f.style.background = '#14b8a6';
+                        setTimeout(() => {
+                            f.style.background = '#cbd5e1';
+                        }, 400);
+                    }, index * 200);
+                });
+
+                await sleep(800);
+            }
+            else if (action === 'PULL') {
+                const rbBadge = document.querySelector('#remoteRepo .branch-badge');
+
+                // Validació de Producció: només fer pull des de main
+                if (rbBadge && !rbBadge.innerText.toLowerCase().includes('main')) {
+                    infoTitle.innerText = "Operació Denegada";
+                    infoTitle.style.color = "#ef4444";
+                    infoDesc.innerText = "Producció només hauria de descarregar codi de la branca principal 'main'. El repositori remot té activa una branca d'experimentació/feature que encara no s'ha fusionat mitjançant una Pull Request. Torna a la vista d'un desenvolupador i fes clic a 'Merge PR'.";
+                    infoCode.innerText = "Denegat - El desplegament a producció des d'una feature branch pot causar inestabilitat severa.";
+
+                    remote.classList.add('highlight-push');
+                    setTimeout(() => remote.classList.remove('highlight-push'), 1000);
+
+                    isAnimating = false;
+                    return;
+                }
+
+                remote.classList.add('highlight-pull');
+
+                const remPos = getPos(remote);
+                const prodPos = getPos(prod);
+
+                const connectingLine = document.getElementById('line-prod');
+                if (connectingLine) {
+                    connectingLine.style.stroke = 'rgba(139, 92, 246, 0.8)';
+                    connectingLine.style.strokeWidth = '3';
+                }
+
+                await animatePacket(remPos.x, remPos.y, prodPos.x, prodPos.y, '#8b5cf6', '<i class="fa-solid fa-server"></i>');
+
+                if (connectingLine) {
+                    connectingLine.style.stroke = 'rgba(148, 163, 184, 0.3)';
+                    connectingLine.style.strokeWidth = '2';
+                }
+
+                prod.classList.add('highlight-pull');
+
+                const remoteBranchBadge = document.querySelector('#remoteRepo .branch-badge');
+                const prodBranchBadge = document.getElementById('prod-branch');
+
+                if (rbBadge && prodBranchBadge) {
+                    prodBranchBadge.innerHTML = rbBadge.innerHTML;
+                    if (rbBadge.innerText.toLowerCase().includes('feature')) {
+                        prodBranchBadge.style.color = '#f472b6';
+                        prodBranchBadge.style.borderColor = 'rgba(244, 114, 182, 0.3)';
+                        prodBranchBadge.style.background = 'rgba(244, 114, 182, 0.1)';
+                    } else {
+                        prodBranchBadge.style.color = '';
+                        prodBranchBadge.style.borderColor = '';
+                        prodBranchBadge.style.background = '';
+                    }
+                }
+
+                const files = document.querySelectorAll('.s-file');
+                files.forEach((f, i) => {
+                    setTimeout(() => {
+                        f.style.background = '#8b5cf6';
+                        f.style.transform = 'scale(1.1)';
+                        setTimeout(() => {
+                            f.style.background = '#a78bfa';
+                            f.style.transform = 'scale(1)';
+                        }, 400);
+                    }, i * 200);
+                });
+
+                await sleep(1000);
+            }
+
+            if (action === 'BRANCH') {
+                if (!isInit[currentDev]) {
+                    infoTitle.innerText = "Repositori no inicialitzat";
+                    infoTitle.style.color = "#ef4444";
+                    infoDesc.innerText = "No pots crear branques sense tenir el repositori inicialitzat.";
+                    infoCode.innerText = "fatal: not a git repository";
+                    isAnimating = false;
+                    return;
+                }
+                if (!hasCommits[currentDev]) {
+                    infoTitle.innerText = "Error de Branca";
+                    infoTitle.style.color = "#ef4444";
+                    infoDesc.innerText = "No pots crear una branca en un repositori totalment buit. Git necessita almenys un commit inicial per saber des d'on 'neix' la nova branca.";
+                    infoCode.innerText = "fatal: Not a valid object name: 'main'";
+                    isAnimating = false;
+                    return;
+                }
+
+                const branchBadge = document.getElementById(`dev${currentDev}-branch`);
+                const devLr = document.getElementById(`dev${currentDev}-lr`);
+
+                devLr.classList.add('highlight-branch');
+
+                if (branchBadge.innerText.toLowerCase().includes('main')) {
+                    branchBadge.innerHTML = '<i class="fa-solid fa-code-branch"></i> feature';
+                    branchBadge.style.color = '#f472b6';
+                    branchBadge.style.borderColor = 'rgba(244, 114, 182, 0.3)';
+                    branchBadge.style.background = 'rgba(244, 114, 182, 0.1)';
+                    infoDesc.innerText = "Has creat i saltat a la branca 'feature'. A partir d'ara els nous commits aniran aquí aïllats de la branca principal (main).";
+                } else {
+                    branchBadge.innerHTML = '<i class="fa-solid fa-code-branch"></i> main';
+                    branchBadge.style.color = '';
+                    branchBadge.style.borderColor = '';
+                    branchBadge.style.background = '';
+                    infoTitle.innerText = "git checkout main - Canvi de Branca";
+                    infoCode.innerText = "git checkout main";
+                    infoDesc.innerText = "Has tornat a la branca 'main'.";
+                }
+
+                await sleep(800);
+            }
+
+            if (action === 'MERGE_PR') {
+                remote.classList.add('highlight-pr');
+
+                const remoteBranchBadge = document.querySelector('#remoteRepo .branch-badge');
+
+                if (remoteBranchBadge) {
+                    remoteBranchBadge.innerHTML = '<i class="fa-solid fa-code-branch"></i> main';
+                    remoteBranchBadge.style.color = '';
+                    remoteBranchBadge.style.borderColor = '';
+                    remoteBranchBadge.style.background = '';
+                }
+
+                const remoteCommits = document.getElementById('remote-commits').children;
+                if (remoteCommits.length > 0) {
+                    const lastRemoteCommit = document.getElementById('remote-commits').lastChild;
+                    lastRemoteCommit.style.borderColor = '#fbbf24';
+                    lastRemoteCommit.innerHTML += ' (Merge PR)';
+                }
+
+                document.querySelector('.btn-pr').style.display = 'none';
+
+                const isCicdEnabled = document.getElementById('cicd-check').checked;
+
+                if (isCicdEnabled) {
+                    infoTitle.innerText = "Merge PR + Autodeploy CI/CD";
+                    infoTitle.style.color = "#fbbf24";
+                    infoDesc.innerText = "Els canvis s'han apropat (merge). El pipeline CI/CD ha detectat en acció l'aprovació i està executant un autodesplegament silenciós al Servidor de Producció!";
+                    infoCode.innerText = "GitHub Actions: Running deploy task...";
+
+                    await sleep(1500);
+
+                    // Force the Pull animation from remote to prod seamlessly
+                    isAnimating = false;
+                    await playAnim('PULL');
+                    isAnimating = true;
+
+                } else {
+                    infoTitle.innerText = "Merge Pull Request aprovat";
+                    infoTitle.style.color = "#fbbf24";
+                    infoDesc.innerText = "Els canvis de la branca (feature) s'han unificat (main). El servidor de Producció encara no se n'ha assabentat, vés manualment al servidor per descarregar-los (pull).";
+                    infoCode.innerText = "Merge commit created successfully.";
+                    await sleep(1000);
+                }
+            }
+
+            if (action === 'D_BUILD') {
+                if (!hasCommits[currentDev]) {
+                    infoTitle.innerText = "No es pot construir";
+                    infoTitle.style.color = "#ef4444";
+                    infoDesc.innerText = "No hi ha codi al l'Área local per empaquetar en una imatge. Fes commit primer per validar l'estat de l'aplicació.";
+                    infoCode.innerText = "ERROR: failed to solve: no files found in context";
+                    isAnimating = false;
+                    return;
+                }
+
+                hasDockerImage[currentDev] = true;
+                const devDocker = document.getElementById(`dev${currentDev}-docker`);
+                devDocker.classList.add('highlight-docker');
+
+                const imgNode = document.getElementById(`dev${currentDev}-img`);
+                imgNode.classList.add('visible');
+
+                await sleep(800);
+            }
+
+            if (action === 'D_PUSH') {
+                if (!hasDockerImage[currentDev]) {
+                    infoTitle.innerText = "Manca Imatge Local";
+                    infoTitle.style.color = "#ef4444";
+                    infoDesc.innerText = "No has construït cap imatge Docker al teu PC. Executa 'docker build' abans d'intentar enviar-la.";
+                    infoCode.innerText = "Error response from daemon: No such image: app:latest";
+                    isAnimating = false;
+                    return;
+                }
+
+                const dPos = getPos(document.getElementById(`dev${currentDev}-docker`));
+                const regPos = getPos(registry);
+
+                const lineId = `line-dev${currentDev}-reg`;
+                const connectingLine = document.getElementById(lineId);
+                if (connectingLine) {
+                    connectingLine.style.stroke = 'rgba(2, 132, 199, 0.8)';
+                    connectingLine.style.strokeWidth = '3';
+                }
+
+                await animatePacket(dPos.x, dPos.y, regPos.x, regPos.y, '#0284c7', '<i class="fa-brands fa-docker"></i>');
+
+                if (connectingLine) {
+                    connectingLine.style.stroke = 'rgba(148, 163, 184, 0.3)';
+                    connectingLine.style.strokeWidth = '2';
+                }
+
+                registryHasImage = true;
+                registry.classList.add('highlight-docker');
+                const regEmpty = document.getElementById('registry-empty-text');
+                if (regEmpty) regEmpty.style.display = 'none';
+
+                const regImages = document.getElementById('registry-images');
+                regImages.innerHTML = '<div class="docker-image visible" style="margin-top:0;"><i class="fa-brands fa-docker" style="margin-right:4px;"></i> app:latest</div>';
+
+                await sleep(800);
+            }
+
+            if (action === 'D_PULL') {
+                if (!registryHasImage) {
+                    infoTitle.innerText = "Imatge No Trobada";
+                    infoTitle.style.color = "#ef4444";
+                    infoDesc.innerText = "El servidor intenta descarregar l'aplicació, però no hi ha cap imatge pujada al Container Registry.";
+                    infoCode.innerText = "Error response from daemon: manifest for app:latest not found";
+                    isAnimating = false;
+                    return;
+                }
+
+                const regPos = getPos(registry);
+                const prodPos = getPos(prod);
+
+                const lineId = 'line-prod-reg';
+                const connectingLine = document.getElementById(lineId);
+                if (connectingLine) {
+                    connectingLine.style.stroke = 'rgba(3, 105, 161, 0.8)';
+                    connectingLine.style.strokeWidth = '3';
+                }
+
+                await animatePacket(regPos.x, regPos.y, prodPos.x, prodPos.y, '#0369a1', '<i class="fa-brands fa-docker"></i>');
+
+                if (connectingLine) {
+                    connectingLine.style.stroke = 'rgba(148, 163, 184, 0.3)';
+                    connectingLine.style.strokeWidth = '2';
+                }
+
+                prodHasImage = true;
+                prod.classList.add('highlight-docker');
+
+                // Animate prod server "receiving image"
+                const prodContainer = document.getElementById('prod-container');
+                prodContainer.innerHTML = '<div class="docker-image visible" style="background:#0369a1; height:25px;"><i class="fa-brands fa-docker" style="margin-right:4px;"></i> app descarregada</div>';
+
+                // Hide old HTML files representation as they are obsolete
+                document.getElementById('prodFiles').style.opacity = '0.3';
+
+                await sleep(800);
+            }
+
+            if (action === 'D_RUN') {
+                if (!prodHasImage) {
+                    infoTitle.innerText = "Manca Imatge al Servidor";
+                    infoTitle.style.color = "#ef4444";
+                    infoDesc.innerText = "El servidor de producció no té cap imatge descarregada per executar. Cridar a 'docker pull' abans.";
+                    infoCode.innerText = "docker: Error response from daemon: No such image: app:latest";
+                    isAnimating = false;
+                    return;
+                }
+
+                prodIsRunning = true;
+                prod.classList.add('highlight-docker');
+
+                const prodContainer = document.getElementById('prod-container');
+                prodContainer.innerHTML = '<div class="running-container visible"><i class="fa-solid fa-play" style="margin-right:5px; font-size:0.6rem;"></i> app:latest (Port 80)</div>';
+
+                await sleep(800);
+            }
+
+            if (action === 'STATUS') {
+                let statusText = "";
+                let statusColor = "#94a3b8";
+
+                if (!isInit[currentDev]) {
+                    statusText = "fatal: not a git repository (or any of the parent directories): .git";
+                    statusColor = "#ef4444";
+                } else if (stagingHasFiles[currentDev]) {
+                    statusText = "Canvis a punt per ser confirmats (Changes to be committed)";
+                    statusColor = "#eab308";
+                } else if (!hasCommits[currentDev]) {
+                    statusText = "No hi ha commits encara.\nHi ha fitxers sense seguiment (untracked files present).";
+                    statusColor = "#ef4444";
+                } else {
+                    statusText = "No hi ha res per confirmar,\narbre de treball net (working tree clean).";
+                    statusColor = "#22c55e";
+                }
+
+                infoCode.innerText = statusText;
+                infoCode.style.color = statusColor;
+
+                isAnimating = false;
+                return;
+            }
+
+            // Cleanup highlights slowly
+            setTimeout(() => {
+                document.querySelectorAll('.highlight-clone, .highlight-init, .highlight-add, .highlight-commit, .highlight-remote, .highlight-push, .highlight-fetch, .highlight-merge, .highlight-pull-dev, .highlight-pull, .highlight-branch, .highlight-pr')
+                    .forEach(e => e.className = e.className.replace(/highlight-\w+/g, '').trim());
+            }, 1000);
+
+            isAnimating = false;
+        }
+
+        function resetSimulation() {
+            if (isAnimating) return;
+
+            isInit = { 1: false, 2: false };
+            stagingHasFiles = { 1: false, 2: false };
+            hasCommits = { 1: false, 2: false };
+            hasRemote = { 1: false, 2: false };
+            hasDockerImage = { 1: false, 2: false };
+            registryHasImage = false;
+            prodHasImage = false;
+            prodIsRunning = false;
+
+            // Clear commits
+            document.getElementById('dev1-commits').innerHTML = '';
+            document.getElementById('dev2-commits').innerHTML = '';
+
+            // Reset Branches
+            document.querySelectorAll('.branch-badge').forEach(badge => {
+                badge.innerHTML = '<i class="fa-solid fa-code-branch"></i> main';
+                badge.style.color = '';
+                badge.style.borderColor = '';
+                badge.style.background = '';
+            });
+
+            document.getElementById('remote-commits').innerHTML = '<div class="commit-row visible init-commit" style="border-color:#64748b" data-id="init"><i class="fa-solid fa-code-commit"></i> <span>a1b2c3d</span> Initial</div>';
+
+            // Re-setup widths of WD files
+            document.querySelectorAll('.file-item').forEach(f => {
+                f.style.background = '#576679';
+                f.style.width = f.id ? '0%' : (40 + Math.random() * 40) + '%';
+            });
+            document.querySelectorAll('.s-file').forEach(f => {
+                f.style.background = f.parentElement.id === 'prodFiles' ? '#64748b' : '#576679';
+            });
+
+            // Clear Docker
+            document.getElementById('dev1-img').classList.remove('visible');
+            document.getElementById('dev2-img').classList.remove('visible');
+            const regImages = document.getElementById('registry-images');
+            if (regImages) regImages.innerHTML = '<span id="registry-empty-text" style="font-size:0.6rem; color:var(--stage-text);">Sense Imatges</span>';
+            const prodContainer = document.getElementById('prod-container');
+            if (prodContainer) prodContainer.innerHTML = '';
+            document.getElementById('prodFiles').style.opacity = '1';
+
+            // Clear connecting lines highlight
+            drawNetworkLines();
+
+            infoTitle.innerText = "Simulació Reiniciada";
+            infoTitle.style.color = "#38bdf8";
+            infoDesc.innerText = "S'ha netejat l'estat local i els repositoris. Tot al punt inicial.";
+            infoCode.innerText = "Esperant acció...";
+            infoCode.style.color = "#fca5a5";
+
+            // reset active buttons state
+            document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+        }
+
+        function toggleTheme() {
+            const root = document.documentElement;
+            const btnIcon = document.querySelector('#themeToggleBtn i');
+
+            if (root.getAttribute('data-theme') === 'light') {
+                root.removeAttribute('data-theme');
+                btnIcon.className = 'fa-solid fa-sun';
+            } else {
+                root.setAttribute('data-theme', 'light');
+                btnIcon.className = 'fa-solid fa-moon';
+            }
+        }
+    </script>
+</body>
+
+</html>

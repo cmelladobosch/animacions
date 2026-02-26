@@ -1,0 +1,1779 @@
+<!DOCTYPE html>
+<html lang="ca">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animació Verbs HTTP</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* CSS reset & variables */
+        :root {
+            --bg-dark: #0f172a;
+            --panel-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+
+            --color-get: #3b82f6;
+            --color-post: #22c55e;
+            --color-put: #f59e0b;
+            --color-patch: #eab308;
+            --color-delete: #ef4444;
+            --color-options: #a855f7;
+            --color-err-404: #f97316;
+            --color-err-500: #dc2626;
+
+            --panel-shadow: rgba(0, 0, 0, 0.5);
+            --inner-bg: rgba(15, 23, 42, 0.8);
+            --record-bg: #1e293b;
+            --record-hl: #334155;
+            --packet-txt: #0f172a;
+            --packet-bg: #fff;
+        }
+
+        body.light-mode {
+            --bg-dark: #c5c5c5;
+            /* Fons grisuav */
+            --panel-bg: rgba(255, 255, 255, 0.65);
+            /* Translúcid més suau */
+            --glass-border: rgba(148, 163, 184, 0.2);
+            --text-main: #334155;
+            /* Gris fosc, menys agressiu que negre pur */
+            --text-muted: #374c69;
+
+            --panel-shadow: rgba(51, 65, 85, 0.05);
+            /* Ombra tènue */
+            --inner-bg: rgba(248, 250, 252, 0.7);
+            --record-bg: #e2e8f0;
+            --record-hl: #cbd5e1;
+            --packet-txt: #1e293b;
+            --packet-bg: #f8fafc;
+        }
+
+        /* Ajustos específics per al mode clar (Light Mode) */
+        body.light-mode .btn {
+            color: #fff;
+        }
+
+        body.light-mode .terminal-panel {
+            background: rgba(255, 255, 255, 0.85);
+            border-color: var(--glass-border);
+        }
+
+        body.light-mode .terminal-header {
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--text-main);
+        }
+
+        body.light-mode .terminal-header button {
+            background: rgba(0, 0, 0, 0.1);
+            color: var(--text-muted);
+        }
+
+        body.light-mode .log-entry {
+            color: var(--text-muted);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-size: 10px;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-image:
+                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.15), transparent 25%);
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+
+        /* Top Navbar */
+        .top-navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem 1.5rem 0.5rem 1.5rem;
+            max-width: 1900px;
+            margin: 0 auto;
+            width: 100%;
+            z-index: 10;
+        }
+
+        .brand h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #236fcb, #8653b9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            gap: 0.5rem;
+        }
+
+        .latency-control {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(15, 23, 42, 0.4);
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .latency-control label {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            min-width: 140px;
+        }
+
+        .latency-control input[type="range"] {
+            accent-color: #3b82f6;
+            cursor: pointer;
+        }
+
+        /* Dashboard Layout */
+        .main-dashboard {
+            display: flex;
+            flex-direction: row;
+            flex: 1;
+            padding: 0 1.5rem 1.5rem 1.5rem;
+            gap: 1.5rem;
+            max-width: 1900px;
+            margin: 0 auto;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .sidebar-left {
+            display: flex;
+            flex-direction: column;
+            width: 210px;
+            min-width: 210px;
+            height: 100%;
+        }
+
+        .center-dash {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 0;
+            gap: 1rem;
+        }
+
+        .sidebar-right {
+            display: flex;
+            flex-direction: column;
+            width: 275px;
+            min-width: 275px;
+            height: 100%;
+        }
+
+        /* Simulation Box */
+        .simulation-box {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-start;
+            gap: 0.4rem;
+            background: var(--panel-bg);
+            border: 1px solid var(--glass-border);
+            padding: 1rem;
+            border-radius: 1rem;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 10px 15px -3px var(--panel-shadow);
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .sim-title {
+            font-size: 0.55rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            margin-right: 0.5rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .btn {
+            background: rgba(41, 51, 66, 0.5);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 0.4rem 0.8rem;
+            border-radius: 9999px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+            max-width: 75px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn.active {
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-get:hover,
+        .btn-get.active {
+            border-color: var(--color-get);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-post:hover,
+        .btn-post.active {
+            border-color: var(--color-post);
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
+        }
+
+        .btn-put:hover,
+        .btn-put.active {
+            border-color: var(--color-put);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+        }
+
+        .btn-patch:hover,
+        .btn-patch.active {
+            border-color: var(--color-patch);
+            box-shadow: 0 0 15px rgba(234, 179, 8, 0.4);
+        }
+
+        .btn-delete:hover,
+        .btn-delete.active {
+            border-color: var(--color-delete);
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-options:hover,
+        .btn-options.active {
+            border-color: var(--color-options);
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+        }
+
+        /* Main Workspace */
+        .workspace {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex: 1;
+            padding: 1rem;
+            position: relative;
+            z-index: 5;
+            width: 100%;
+            border-radius: 0.5rem;
+        }
+
+        /* Entities */
+        .entity {
+            background: var(--panel-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 1rem;
+            padding: 1rem 0.5rem;
+            width: 180px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 25px 50px -12px var(--panel-shadow);
+            position: relative;
+        }
+
+        .entity-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: #94a3b8;
+        }
+
+        .entity-title {
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        /* Client Specifics */
+        .client-screen {
+            width: 100%;
+            height: 120px;
+            background: var(--inner-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 0.5rem;
+            padding: 0.4rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .client-data-row {
+            height: 12px;
+            background: var(--record-hl);
+            border-radius: 999px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        /* Terminal Log Panel */
+        .terminal-panel {
+            width: 100%;
+            flex: 1;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--glass-border);
+            border-radius: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid var(--glass-border);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        .terminal-header button {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #cbd5e1;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .terminal-header button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .client-logs {
+            flex: 1;
+            padding: 0.8rem 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .client-logs::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .client-logs::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .client-logs::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+
+        .log-entry {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: #94a3b8;
+            border-left: 2px solid transparent;
+            padding-left: 0.4rem;
+        }
+
+        .log-ok {
+            border-color: #10b981;
+            color: #a7f3d0;
+        }
+
+        .log-err {
+            border-color: #ef4444;
+            color: #fecaca;
+        }
+
+        /* Server Specifics */
+        .server-rack {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            width: 100%;
+        }
+
+        .rack-slot {
+            height: 16px;
+            background: var(--inner-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .rack-led {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--record-hl);
+            box-shadow: 0 0 5px transparent;
+            transition: all 0.3s ease;
+        }
+
+        .rack-slot.active .rack-led {
+            background: #10b981;
+            box-shadow: 0 0 8px #10b981;
+            animation: blink 0.5s infinite alternate;
+        }
+
+        /* Nou estat d'error per al servidor */
+        .rack-slot.error .rack-led {
+            background: #ef4444;
+            /* Vermell */
+            box-shadow: 0 0 8px #ef4444;
+            animation: blinkError 0.15s infinite alternate;
+            /* Parpelleig més ràpid */
+        }
+
+        /* Nou estat d'error d'autenticació (401) */
+        .rack-slot.auth-error .rack-led {
+            background: #f59e0b;
+            /* Taronja */
+            box-shadow: 0 0 8px #f59e0b;
+            animation: blinkError 0.15s infinite alternate;
+        }
+
+        /* Nou estat d'error Rate Limit (429) */
+        .rack-slot.rate-limit .rack-led {
+            background: #a855f7;
+            /* Lila */
+            box-shadow: 0 0 8px #a855f7;
+            animation: blinkError 0.15s infinite alternate;
+        }
+
+        @keyframes blinkError {
+            from {
+                opacity: 0.2;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Database */
+        .database-container {
+            margin-top: 1.5rem;
+            width: 100%;
+            background: var(--inner-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            min-height: 120px;
+        }
+
+        .db-header {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .db-record {
+            background: var(--record-bg);
+            border-left: 3px solid #64748b;
+            padding: 0.3rem;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-family: 'JetBrains Mono', monospace;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 0.3rem;
+            transition: all 0.5s ease;
+            width: 100%;
+        }
+
+        .db-record span {
+            color: #38bdf8;
+        }
+
+        /* Network Path (The Line) */
+        .network-path {
+            flex: 1;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.3), transparent);
+            position: relative;
+            margin: 0 2rem;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Packet Animation */
+        .packet {
+            position: absolute;
+            width: 40px;
+            height: 24px;
+            background: #fff;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            font-weight: bold;
+            color: var(--packet-txt);
+            background: var(--packet-bg);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        .packet i {
+            font-size: 0.8rem;
+        }
+
+        /* Animations */
+        @keyframes sendReq {
+            0% {
+                left: 0;
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                left: calc(100% - 40px);
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes sendRes {
+            0% {
+                left: calc(100% - 40px);
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                left: 0;
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes blink {
+            from {
+                opacity: 0.5;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Description Box */
+        .info-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            z-index: 10;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            backdrop-filter: blur(12px);
+            margin-top: auto;
+        }
+
+        .info-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+            transition: color 0.3s ease;
+        }
+
+        .info-desc {
+            max-width: 800px;
+            color: var(--text-muted);
+            line-height: 1.5;
+            font-size: 0.8rem;
+        }
+
+        .info-code {
+            margin-top: 1rem;
+            background: var(--inner-bg);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            font-family: 'JetBrains Mono', monospace;
+            color: #a78bfa;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="top-navbar">
+        <div class="brand">
+            <h1>>_ HTTP API</h1>
+        </div>
+
+        <div
+            style="flex:1; margin-right:200px;text-align:center; color:var(--text-muted); font-weight:600; font-size:1.8rem; letter-spacing:0.05em;">
+            Funcionament dels Verbs HTTP
+        </div>
+
+        <button id="themeToggle" aria-label="Canviar tema clar/fosc"
+            style="background: none; border: none; font-size: 1.5rem; color: var(--text-main); cursor: pointer; transition: color 0.3s ease;">
+            <i class="fa-solid fa-moon" id="themeIcon"></i>
+        </button>
+    </div>
+
+    <div class="main-dashboard">
+        <!-- Col 1: Config (Left) -->
+        <div class="sidebar-left">
+            <div class="simulation-box">
+                <span class="sim-title" style="margin-bottom: 0.5rem; display:block; color: var(--text-main);"><i
+                        class="fa-solid fa-terminal"></i> Accions HTTP:</span>
+
+                <div class="controls" style="margin-bottom: 1rem;">
+                    <div
+                        style="display: flex; align-items: center; justify-content: space-between; background: rgba(59, 130, 246, 0.1); border-radius: 0.5rem; padding-right: 0.5rem; border: 1px solid rgba(59, 130, 246, 0.3); max-width: 100px;">
+                        <button class="btn btn-get" onclick="playAnim('GET')"
+                            style="margin: 0; flex:1; border-top-right-radius: 0; border-bottom-right-radius: 0;">GET</button>
+                        <input type="text" id="queryInput" placeholder="?id="
+                            style="background: transparent; border: none; color: #3b82f6; font-family: 'JetBrains Mono', monospace; width: 35px; font-size: 0.65rem; outline: none; text-align: right;">
+                    </div>
+
+                    <div
+                        style="display: flex; flex-direction: column; gap: 0.3rem; background: rgba(34, 197, 94, 0.1); border-radius: 0.5rem; padding: 0.4rem; border: 1px solid rgba(34, 197, 94, 0.3);">
+                        <div style="display: flex; gap: 0.3rem; width: 100%;">
+                            <button class="btn btn-post" onclick="playAnim('POST')"
+                                style="flex:1; margin: 0; padding: 0.3rem;">POST</button>
+                            <button class="btn btn-put" onclick="playAnim('PUT')"
+                                style="flex:1; margin: 0; padding: 0.3rem;">PUT</button>
+                            <button class="btn btn-patch" onclick="playAnim('PATCH')"
+                                style="flex:1; margin: 0; padding: 0.3rem;">PATCH</button>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; justify-content: space-between;">
+                            <input type="text" id="bodyInput" placeholder="{ json }"
+                                style="background: transparent; border: none; color: #22c55e; font-family: 'JetBrains Mono', monospace; width: 50px; font-size: 0.65rem; outline: none;">
+                            <input type="text" id="putPatchQueryInput" placeholder="?id="
+                                style="background: transparent; border: none; color: #f59e0b; font-family: 'JetBrains Mono', monospace; width: 40px; font-size: 0.65rem; outline: none; text-align: right;">
+                        </div>
+                    </div>
+
+                    <div
+                        style="display: flex; align-items: center; justify-content: space-between; background: rgba(239, 68, 68, 0.1); border-radius: 0.5rem; padding-right: 0.5rem; border: 1px solid rgba(239, 68, 68, 0.3); max-width: 100px;">
+                        <button class="btn btn-delete" onclick="playAnim('DELETE')"
+                            style="margin: 0; flex:1; border-top-right-radius: 0; border-bottom-right-radius: 0;">DELETE</button>
+                        <input type="text" id="deleteQueryInput" placeholder="?id="
+                            style="background: transparent; border: none; color: #ef4444; font-family: 'JetBrains Mono', monospace; width: 35px; font-size: 0.65rem; outline: none; text-align: right;">
+                    </div>
+                    <button class="btn btn-options" onclick="playAnim('OPTIONS')" style="width: 100%;">OPTIONS</button>
+                </div>
+
+                <div style="border-top: 1px solid var(--glass-border); width: 100%; margin: 0.1rem 0;"></div>
+
+                <span class="sim-title" style="margin-bottom: 0.2rem; display:block;"><i
+                        class="fa-solid fa-tower-cell"></i> Entorn:</span>
+
+                <label
+                    style="color: var(--text-muted); font-size: 0.6rem; display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+                    <input type="checkbox" id="wifiToggle" style="cursor: pointer; accent-color: #10b981;" checked>
+                    <i id="wifiIcon" class="fa-solid fa-wifi" style="width: 16px; text-align: center;"></i> Wi-Fi
+                </label>
+
+                <label
+                    style="color: var(--text-muted); font-size: 0.6rem; display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+                    <input type="checkbox" id="cacheToggle" style="cursor: pointer; accent-color: #3b82f6;">
+                    <i class="fa-solid fa-memory" style="width: 16px; text-align: center;"></i> Cache Local
+                </label>
+
+                <label
+                    style="color: var(--text-muted); font-size: 0.6rem; display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+                    <input type="checkbox" id="errorToggle" style="cursor: pointer; accent-color: #ef4444;">
+                    <i class="fa-solid fa-triangle-exclamation" style="width: 16px; text-align: center;"></i> Simular
+                    Error (404)
+                </label>
+
+                <label
+                    style="color: var(--text-muted); font-size: 0.6rem; display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+                    <input type="checkbox" id="rateLimitToggle" style="cursor: pointer; accent-color: #a855f7;">
+                    <i class="fa-solid fa-stopwatch" style="width: 16px; text-align: center;"></i> Rate Limiting
+                </label>
+
+                <label
+                    style="color: var(--text-muted); font-size: 0.6rem; display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+                    <input type="checkbox" id="corsToggle" style="cursor: pointer; accent-color: #eab308;" checked>
+                    <i class="fa-solid fa-shield-halved" style="width: 16px; text-align: center;"></i> CORS
+                    (Allow-Origin: *)
+                </label>
+
+                <div style="border-top: 1px solid var(--glass-border); width: 100%; margin: 0.5rem 0;"></div>
+
+                <button id="hackBtn" onclick="toggleHack()"
+                    style="width: 100%; justify-content: center; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.4); color: #ef4444; border-radius: 4px; padding: 0.4rem; font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; transition: all 0.2s;">
+                    <i class="fa-solid fa-user-ninja"></i> Hack JWT
+                </button>
+
+                <div style="border-top: 1px solid var(--glass-border); width: 100%; margin: 0.5rem 0;"></div>
+
+                <div class="latency-control"
+                    style="background: none; border: none; padding: 0; width:100%; flex-direction: column; align-items: flex-start; gap: 0.5rem;">
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <i class="fa-solid fa-gauge-high" style="color: var(--text-muted);"></i>
+                        <label id="latencyLabel" style="min-width: unset; margin:0;">Velocitat: 1x</label>
+                    </div>
+                    <input type="range" id="latencySlider" min="0.5" max="3" step="0.5" value="1" style="width:100%;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Col 2: Center Workspace (Animation) -->
+        <div class="center-dash">
+            <div class="workspace">
+                <!-- Client -->
+                <div class="entity" id="client">
+                    <i class="fa-solid fa-laptop entity-icon"></i>
+                    <div class="entity-title"
+                        style="display:flex; flex-direction:column; align-items:center; width:100%; margin-bottom: 1rem; text-transform:none; gap: 0.5rem;">
+                        <div style="display:flex; flex-direction:column; text-align: center;">
+                            <span
+                                style="text-transform:uppercase; font-size:0.85rem; letter-spacing:0.05em; font-weight:600;">Client
+                                App</span>
+                            <span
+                                style="font-size: 0.65rem; color: #94a3b8; font-family:'JetBrains Mono', monospace;"><i
+                                    class="fa-solid fa-globe"></i> http://app.com</span>
+                        </div>
+
+                        <button id="loginBtn" onclick="toggleLogin()"
+                            style="font-size: 0.6rem; color: #94a3b8; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; border: 1px solid rgba(148, 163, 184, 0.3); padding: 0.3rem 0.6rem; border-radius: 4px; background: rgba(148, 163, 184, 0.1); margin-top: 0; font-family:'JetBrains Mono', monospace; transition: all 0.3s ease; width: fit-content;">
+                            <i class="fa-solid fa-right-to-bracket"></i> LOGIN
+                        </button>
+                    </div>
+                    <div class="client-screen" id="clientScreen">
+                        <div id="jwtTokenBox"
+                            style="display: none; position: absolute; bottom: 5px; right: 5px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.5); color: #10b981; padding: 0.2rem 0.6rem; border-radius: 4px; font-family:'JetBrains Mono', monospace; font-size: 0.6rem; font-weight: bold; align-items: center; gap: 0.4rem; z-index: 5;">
+                            <i id="jwtIcon" class="fa-solid fa-key"></i> <span id="jwtLabel">TOKEN JWT</span> (<span
+                                id="jwtTime">15s</span>)
+                        </div>
+                        <!-- Capçalera de peticions (les 3 columes de colors imitades) -->
+                        <div>
+                            <div class="client-data-row" id="cRow1" style="margin-bottom: 4px;"></div>
+                            <div class="client-data-row" id="cRow2" style="margin-bottom: 4px;"></div>
+                            <div class="client-data-row" id="cRow3"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Network -->
+                <div class="network-path">
+                    <div class="packet" id="packet"></div>
+                </div>
+
+                <!-- Server & DB -->
+                <div class="entity" id="server">
+                    <i class="fa-solid fa-server entity-icon"></i>
+                    <div class="entity-title" style="margin-bottom: 0;">Servidor / API</div>
+                    <div
+                        style="font-size: 0.65rem; color: #94a3b8; font-family:'JetBrains Mono', monospace; margin-bottom: 0.8rem;">
+                        <i class="fa-solid fa-network-wired"></i> http://api.com
+                    </div>
+
+                    <div class="server-rack" id="serverRack">
+                        <div class="rack-slot">
+                            <div class="rack-led"></div>
+                        </div>
+                        <div class="rack-slot">
+                            <div class="rack-led"></div>
+                        </div>
+                        <div class="rack-slot">
+                            <div class="rack-led"></div>
+                        </div>
+                    </div>
+
+                    <div class="database-container">
+                        <div class="db-header"><i class="fa-solid fa-database"></i> Base de Dades</div>
+                        <!-- DB contents will be managed by JS -->
+                        <div id="dbRecords"></div>
+                    </div>
+                </div>
+
+                <!-- Footer Crèdits -->
+                <div
+                    style="position: absolute; bottom: 5px; right: 5px; color: var(--text-muted); font-size: 0.65rem; font-family: 'Inter', sans-serif; text-align: right; z-index: 50; padding: 4px 8px; border-radius: 4px; background: var(--bg-dark); border: 1px solid var(--glass-border);">
+                    Creat per <strong>@CMB</strong> <br>
+                    Institut Montilivi - Girona <br>
+                    <a href="https://opensource.org/licenses/MIT" target="_blank"
+                        style="color:#0ea5e9; text-decoration:none;">Llicència Lliure (MIT)</a>
+                </div>
+            </div>
+
+            <!-- Description Box -->
+            <div class="info-panel">
+                <div class="info-title" id="infoTitle">HTTP / REST API</div>
+                <div class="info-desc" id="infoDesc">
+                    Selecciona un verb HTTP per veure com interactuen el client i el servidor per gestionar els
+                    recursos.
+                </div>
+                <div class="info-code" id="infoCode">Esperant acció...</div>
+            </div>
+        </div>
+
+        <!-- Col 3: Terminal Logs (Right) -->
+        <div class="sidebar-right">
+            <!-- Terminal De Xarxa / Logs -->
+            <div class="terminal-panel">
+                <div class="terminal-header">
+                    <span><i class="fa-solid fa-terminal"></i> Network / Logs</span>
+                    <button onclick="clearLogs()"><i class="fa-solid fa-eraser"></i> Clear</button>
+                </div>
+                <div class="client-logs" id="clientLogs">
+                    <div class="log-entry" style="color:#64748b">-- System Ready --</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let currentRecordId = 1;
+        let dbState = [
+            { id: 1, name: "Usuari actiu", color: "#3b82f6" }
+        ];
+
+        const packetEl = document.getElementById('packet');
+        const infoTitle = document.getElementById('infoTitle');
+        const infoDesc = document.getElementById('infoDesc');
+        const infoCode = document.getElementById('infoCode');
+        const clientScreenRows = [
+            document.getElementById('cRow1'),
+            document.getElementById('cRow2'),
+            document.getElementById('cRow3')
+        ];
+        const rackSlots = document.querySelectorAll('.rack-slot');
+        let isAnimating = false;
+        let latencyMultiplier = 1;
+        let isAuthActive = false; // Substitueix el 'authToggle' input
+        let isJwtHacked = false; // JWT Tampering flag
+
+        let tokenInterval = null;
+        let tokenTimeLeft = 15;
+
+        function toggleHack() {
+            isJwtHacked = !isJwtHacked;
+            const btn = document.getElementById('hackBtn');
+            const tokenBox = document.getElementById('jwtTokenBox');
+            const jwtIcon = document.getElementById('jwtIcon');
+            const jwtLabel = document.getElementById('jwtLabel');
+
+            if (isJwtHacked) {
+                btn.style.color = '#fff';
+                btn.style.background = '#ef4444';
+                btn.style.borderColor = '#ef4444';
+                btn.innerHTML = '<i class="fa-solid fa-user-ninja"></i> Hack Actiu';
+
+                jwtIcon.className = 'fa-solid fa-bug';
+                jwtLabel.innerText = 'JWT (HACKED)';
+
+                if (isAuthActive) {
+                    tokenBox.style.color = '#ef4444';
+                    tokenBox.style.borderColor = '#ef4444';
+                    tokenBox.style.background = 'rgba(239, 68, 68, 0.15)';
+                }
+                addLog('HACK', 'JWT TAMPERED', 'Signatura manipula / JWT expirat falsejat');
+            } else {
+                btn.style.color = '#ef4444';
+                btn.style.background = 'rgba(239, 68, 68, 0.1)';
+                btn.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+                btn.innerHTML = '<i class="fa-solid fa-user-ninja"></i> Hack JWT';
+
+                jwtIcon.className = 'fa-solid fa-key';
+                jwtLabel.innerText = 'TOKEN JWT';
+
+                if (isAuthActive) {
+                    tokenBox.style.color = '#10b981';
+                    tokenBox.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+                    tokenBox.style.background = 'rgba(16, 185, 129, 0.15)';
+                }
+                addLog('HACK', 'JWT RESTRICTED', 'Signatura JWT original íntegra');
+            }
+        }
+
+        function toggleLogin(isAutoLogout = false) {
+            isAuthActive = !isAuthActive;
+            const btn = document.getElementById('loginBtn');
+            const tokenBox = document.getElementById('jwtTokenBox');
+            const timeSpan = document.getElementById('jwtTime');
+
+            if (isAuthActive) {
+                // LOGOUT appearance
+                btn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> LOGOUT';
+                btn.style.color = '#ef4444';
+                btn.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+                btn.style.background = 'rgba(239, 68, 68, 0.1)';
+
+                // Show visual JWT Token
+                tokenTimeLeft = 15;
+                timeSpan.innerText = `${tokenTimeLeft}s`;
+
+                if (isJwtHacked) {
+                    tokenBox.style.color = '#ef4444';
+                    tokenBox.style.borderColor = '#ef4444';
+                    tokenBox.style.background = 'rgba(239, 68, 68, 0.15)';
+                } else {
+                    tokenBox.style.color = '#10b981';
+                    tokenBox.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+                    tokenBox.style.background = 'rgba(16, 185, 129, 0.15)';
+                }
+
+                tokenBox.style.display = 'flex';
+                tokenBox.style.animation = 'blink 0.5s ease 2';
+
+                addLog('AUTH', '/api/login', '200 OK (JWT Emmagatzemat: Expira en 15s)');
+
+                // Start expiry timer
+                if (tokenInterval) clearInterval(tokenInterval);
+                tokenInterval = setInterval(() => {
+                    tokenTimeLeft--;
+                    timeSpan.innerText = `${tokenTimeLeft}s`;
+
+                    // Alerta visual de caducitat propera. Si no estem hackejats mostrem vermell
+                    if (tokenTimeLeft <= 3 && !isJwtHacked) {
+                        tokenBox.style.color = '#ef4444';
+                        tokenBox.style.borderColor = '#ef4444';
+                    }
+
+                    // Expirat
+                    if (tokenTimeLeft <= 0) {
+                        clearInterval(tokenInterval);
+                        isAuthActive = true; // Forçem que el toggle inferior ho reconegui i faci logaut
+                        toggleLogin(true); // Auto-logout
+                    }
+                }, 1000);
+
+            } else {
+                // LOGIN appearance
+                btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> LOGIN';
+                btn.style.color = '#94a3b8';
+                btn.style.borderColor = 'rgba(148, 163, 184, 0.3)';
+                btn.style.background = 'rgba(148, 163, 184, 0.1)';
+
+                // Hide token
+                tokenBox.style.display = 'none';
+                tokenBox.style.color = '#10b981'; // reset
+                tokenBox.style.borderColor = 'rgba(16, 185, 129, 0.5)'; // reset
+
+                // Aturar timer si sortim manualment
+                if (tokenInterval) clearInterval(tokenInterval);
+
+                if (isAutoLogout === true) {
+                    addLog('AUTH', 'JWT EXPIRAT', '401 Unauthorized (Logout automàtic)');
+                } else {
+                    addLog('AUTH', '/api/logout', '200 OK (JWT Eliminat manualment)');
+                }
+            }
+        }
+
+        // Latency slider logic
+        const slider = document.getElementById('latencySlider');
+        const label = document.getElementById('latencyLabel');
+
+        slider.addEventListener('input', (e) => {
+            latencyMultiplier = parseFloat(e.target.value);
+            let text = 'Normal (1x)';
+            if (latencyMultiplier === 0.5) text = 'Fibra Òptica (0.5x)';
+            else if (latencyMultiplier === 1.5) text = 'Connexió 4G (1.5x)';
+            else if (latencyMultiplier === 2) text = 'Connexió 3G (2x)';
+            else if (latencyMultiplier > 2) text = 'Molt Lent / 2G (3x)';
+
+            label.innerText = `Xarxa: ${text}`;
+        });
+
+        // Configs per verb
+        const verbConfig = {
+            'GET': {
+                color: '#3b82f6',
+                reqIcon: '<i class="fa-solid fa-magnifying-glass"></i>',
+                resIcon: '<i class="fa-regular fa-file-code"></i>',
+                title: 'GET - Llegir Dades',
+                desc: "Sol·licita la representació d'un recurs específic. El servidor consulta la base de dades i retorna les dades (ex. JSON) sense modificar res.",
+                code: 'GET /api/usuaris/1 HTTP/1.1'
+            },
+            'POST': {
+                color: '#22c55e',
+                reqIcon: '<i class="fa-solid fa-box"></i>',
+                resIcon: '201',
+                title: 'POST - Crear Recurs',
+                desc: "Envia dades al servidor per crear un recurs completament nou a la base de dades. Sol retornar l'objecte creat i un codi 201 (Created).",
+                code: 'POST /api/usuaris HTTP/1.1 { "nom": "Nou Usuari" }'
+            },
+            'PUT': {
+                color: '#f59e0b',
+                reqIcon: '<i class="fa-solid fa-right-left"></i>',
+                resIcon: '200',
+                title: 'PUT - Reemplaçar Completament',
+                desc: "Actualitza un recurs existent reemplaçant tota la seva informació amb les dades de la petició. Si no existeix, el pot crear completament.",
+                code: 'PUT /api/usuaris/1 HTTP/1.1 { "nom": "Canvi Total", ... }'
+            },
+            'PATCH': {
+                color: '#eab308',
+                reqIcon: '<i class="fa-solid fa-wrench"></i>',
+                resIcon: '200',
+                title: 'PATCH - Actualització Parcial',
+                desc: "Aplica modificacions parcials a un recurs. Només s'envien els camps que canvien, sent més lleuger que PUT.",
+                code: 'PATCH /api/usuaris/1 HTTP/1.1 { "estat": "Inactiu" }'
+            },
+            'DELETE': {
+                color: '#ef4444',
+                reqIcon: '<i class="fa-solid fa-trash"></i>',
+                resIcon: '204',
+                title: 'DELETE - Eliminar Recurs',
+                desc: "Sol·licita eliminar un recurs existent del servidor. El servidor l'esborra de la base de dades permanentment.",
+                code: 'DELETE /api/usuaris/1 HTTP/1.1'
+            },
+            'OPTIONS': {
+                color: '#a855f7',
+                reqIcon: '<i class="fa-solid fa-sliders"></i>',
+                resIcon: '204',
+                title: 'OPTIONS - Opcions de Comunicació',
+                desc: "Sol·licita informació sobre quins tipus de peticions i mètodes estan permesos al servidor. No modifica dades.",
+                code: 'OPTIONS /api/usuaris HTTP/1.1'
+            }
+        };
+
+        function renderDB() {
+            const container = document.getElementById('dbRecords');
+            container.innerHTML = '';
+            if (dbState.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#64748b; font-size:0.8rem; padding: 1rem;">[ Cap recurs a la Base de Dades ]</div>';
+                return;
+            }
+            dbState.forEach(record => {
+                const el = document.createElement('div');
+                el.className = 'db-record';
+                el.style.borderLeftColor = record.color;
+                el.id = `db-rec-${record.id}`;
+                el.innerHTML = `<span>{id:${record.id}}</span> ${record.name}`;
+                container.appendChild(el);
+            });
+        }
+
+        renderDB();
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function setServerActive(active) {
+            rackSlots.forEach(slot => {
+                if (active) slot.classList.add('active');
+                else slot.classList.remove('active');
+            });
+        }
+
+        // NOU: Funció per mostrar l'estat d'error al servidor
+        function setServerError(active) {
+            rackSlots.forEach(slot => {
+                if (active) slot.classList.add('error');
+                else slot.classList.remove('error');
+            });
+        }
+
+        // NOU: Funció per mostrar l'estat d'error 401
+        function setServerAuthError(active) {
+            rackSlots.forEach(slot => {
+                if (active) slot.classList.add('auth-error');
+                else slot.classList.remove('auth-error');
+            });
+        }
+
+        // NOU: Funció per mostrar l'estat d'error 429
+        function setServerRateLimitError(active) {
+            rackSlots.forEach(slot => {
+                if (active) slot.classList.add('rate-limit');
+                else slot.classList.remove('rate-limit');
+            });
+        }
+
+        let requestTimestamps = [];
+        let lastGetUrl = null; // Per trackejar la cache
+
+        // Funció ràpida pels logs
+        function addLog(verb, url, status) {
+            const logsContainer = document.getElementById('clientLogs');
+            const now = new Date();
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
+            // Determinar si l'estat és un èxit. Com que certs missatges afegeixen icones <i ...> davant de l'OK, ho busquem.
+            const isOk = status.startsWith('2') || status.includes('OK') || status.includes('No Content');
+            const logClass = isOk ? 'log-ok' : 'log-err';
+
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${logClass}`;
+            entry.innerHTML = `[${timeStr}] ${verb} ${url} - ${status}`;
+
+            logsContainer.appendChild(entry);
+            logsContainer.scrollTop = logsContainer.scrollHeight; // Auto-scroll
+        }
+
+        // Buidat de Logs
+        function clearLogs() {
+            const logsContainer = document.getElementById('clientLogs');
+            logsContainer.innerHTML = '<div class="log-entry" style="color:#64748b">-- Logs Esborrats --</div>';
+        }
+
+        async function playAnim(verb) {
+            if (isAnimating) return;
+            isAnimating = true;
+
+            // UI Reset
+            document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+            // Selector compatible per a classes amb números o lletres
+            const activeBtn = Array.from(document.querySelectorAll('.btn')).find(el => el.getAttribute('onclick') === `playAnim('${verb}')`);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            clientScreenRows.forEach(row => { row.style.width = '0%'; row.style.backgroundColor = 'var(--record-hl)'; });
+
+            const config = verbConfig[verb];
+            infoTitle.innerText = config.title;
+            infoTitle.style.color = config.color;
+            infoDesc.innerText = config.desc;
+            infoCode.innerText = config.code;
+
+            // Client prepare sequence
+            if (['POST', 'PUT', 'PATCH'].includes(verb)) {
+                clientScreenRows[0].style.width = '80%';
+                clientScreenRows[0].style.backgroundColor = config.color;
+                if (verb !== 'PATCH') clientScreenRows[1].style.width = '60%';
+                if (verb !== 'PATCH') clientScreenRows[1].style.backgroundColor = config.color;
+                await sleep(400 * latencyMultiplier);
+            }
+
+            // ---------- BLOC Wi-Fi (Offline) ----------
+            const isWiFiActive = document.getElementById('wifiToggle').checked;
+            if (!isWiFiActive) {
+                // Sense connexió. El client falla localment.
+                clientScreenRows.forEach(row => {
+                    row.style.width = '100%';
+                    row.style.backgroundColor = '#94a3b8'; // Gris offline
+                });
+
+                infoTitle.innerText = "Error: ERR_INTERNET_DISCONNECTED";
+                infoTitle.style.color = '#94a3b8';
+                infoDesc.innerText = "El navegador no pot resoldre la petició perquè no hi ha connexió a la xarxa. El paquet no ha arribat a sortir del teu dispositiu.";
+                infoCode.innerText = "TypeError: Failed to fetch";
+
+                addLog(verb, '/api/...', 'Offline (No Network)');
+                isAnimating = false;
+                return;
+            }
+            // ---------- FI BLOC Wi-Fi ----------
+
+            // ---------- FI BLOC Wi-Fi ----------
+
+            // ---------- BLOC CACHE, QUERY STRINGS & DELETE VALIDATION ----------
+            let currentUrl = '/api/usuaris';
+            if (verb === 'GET') {
+                const queryVal = document.getElementById('queryInput').value.trim();
+                if (queryVal) {
+                    currentUrl += queryVal;
+                }
+            } else if (verb === 'DELETE') {
+                const delQuery = document.getElementById('deleteQueryInput').value.trim();
+                if (!delQuery.startsWith('?id=')) {
+                    // Obliguem a tenir un ID per esborrar
+                    clientScreenRows.forEach(row => { row.style.width = '100%'; row.style.backgroundColor = '#f97316'; });
+                    infoTitle.innerText = "Error local: Falta paràmetre ?id=";
+                    infoTitle.style.color = '#f97316';
+                    infoDesc.innerText = "No pots llançar una petició DELETE genèrica sense especificar quin ID vols esborrar (ex: ?id=1). El client ha bloquejat l'acció per prevenció.";
+                    infoCode.innerText = "Client-Side Validation Failed";
+                    addLog(verb, currentUrl, 'Client Error (Missing ID)');
+                    isAnimating = false;
+                    return;
+                }
+                currentUrl += delQuery;
+            } else if (['PUT', 'PATCH'].includes(verb)) {
+                const ppQuery = document.getElementById('putPatchQueryInput').value.trim();
+                if (!ppQuery.startsWith('?id=')) {
+                    // Obliguem a tenir un ID per modificar
+                    clientScreenRows.forEach(row => { row.style.width = '100%'; row.style.backgroundColor = '#f97316'; });
+                    infoTitle.innerText = "Error local: Falta paràmetre ?id=";
+                    infoTitle.style.color = '#f97316';
+                    infoDesc.innerText = `No pots llançar una petició ${verb} genèrica sense especificar quin ID vols modificar (ex: ?id=1).`;
+                    infoCode.innerText = "Client-Side Validation Failed";
+                    addLog(verb, currentUrl, 'Client Error (Missing ID)');
+                    isAnimating = false;
+                    return;
+                }
+                currentUrl += ppQuery;
+            }
+
+            // Validació de dades (Payload) per a POST, PUT i PATCH
+            if (['POST', 'PUT', 'PATCH'].includes(verb)) {
+                const bodyVal = document.getElementById('bodyInput').value.trim();
+                if (!bodyVal) {
+                    clientScreenRows.forEach(row => { row.style.width = '100%'; row.style.backgroundColor = '#f97316'; });
+                    infoTitle.innerText = "Error local: Falta informació (Payload)";
+                    infoTitle.style.color = '#f97316';
+                    infoDesc.innerText = `Una petició ${verb} requereix enviar dades al servidor. El calaix de text { json } no pot estar buit.`;
+                    infoCode.innerText = "Client-Side Validation Failed";
+                    addLog(verb, currentUrl, 'Client Error (Missing Payload)');
+                    isAnimating = false;
+                    return;
+                }
+            }
+
+            const isCacheActive = document.getElementById('cacheToggle').checked;
+            if (verb === 'GET' && isCacheActive) {
+                if (lastGetUrl === currentUrl) {
+                    // Cache Hit! Retornem des del client directament
+                    clientScreenRows.forEach(row => {
+                        row.style.width = '100%';
+                        row.style.backgroundColor = '#10b981'; // Verd
+                    });
+
+                    infoTitle.innerText = "200 OK (from disk cache) / 304 Not Modified";
+                    infoTitle.style.color = '#10b981';
+                    infoDesc.innerText = "El navegador tenia aquesta mateixa petició guardada a la memòria cau fa un moment. Per estalviar dades i temps, ni tan sols viatja al servidor i es resol instantàniament a nivell local.";
+                    infoCode.innerText = "HTTP/1.1 304 Not Modified\\nCache-Control: max-age=3600";
+
+                    // Petit paquet simulant el rebot intern
+                    packetEl.style.animation = 'none';
+                    packetEl.offsetHeight;
+                    packetEl.style.background = '#10b981';
+                    packetEl.style.color = '#fff';
+                    packetEl.innerHTML = '<i class="fa-solid fa-memory"></i>';
+                    // Rebot curt cap a l'esquerra (simulant que no surt del client)
+                    packetEl.style.animation = `sendReq 0.3s cubic-bezier(0.4, 0, 0.2, 1) alternate 2`;
+
+                    addLog(verb, currentUrl, '304 Not Modified (Cache Hit)');
+
+                    await sleep(600); // Wait for short anim
+                    isAnimating = false;
+                    return;
+                } else {
+                    // Ho guardem per la següent iteració
+                    lastGetUrl = currentUrl;
+                }
+            } else if (verb === 'GET' && !isCacheActive) {
+                lastGetUrl = null; // Buidem la memòria si desactivem
+            }
+            // ---------- FI BLOC CACHE ----------
+
+            // Packet setup and send
+            packetEl.style.animation = 'none'; // reset
+            packetEl.offsetHeight; // force reflow
+
+            packetEl.style.background = config.color;
+            packetEl.style.color = ['#3b82f6', '#22c55e', '#f59e0b', '#eab308', '#ef4444', '#a855f7', '#dc2626', '#f97316'].includes(config.color) ? '#fff' : '#000';
+
+            // Si hi ha Query String posem un text en comptes d'icona per demostrar que porta dades 
+            if (verb === 'GET' && currentUrl.includes('?')) {
+                packetEl.innerHTML = `<span style="font-size:0.5rem; font-weight:bold;">${document.getElementById('queryInput').value}</span>`;
+            } else {
+                packetEl.innerHTML = config.reqIcon;
+            }
+            packetEl.style.animation = `sendReq ${1.2 * latencyMultiplier}s cubic-bezier(0.4, 0, 0.2, 1) forwards`;
+
+            await sleep(1200 * latencyMultiplier);
+
+            // Server Processing
+            packetEl.style.opacity = '0';
+            setServerActive(true);
+
+            await sleep(600 * latencyMultiplier);
+
+            // ---------- BLOC RATE LIMITING (429) NOU ----------
+            const isRateLimitActive = document.getElementById('rateLimitToggle').checked;
+
+            if (isRateLimitActive) {
+                const now = Date.now();
+                // Netejar timestamps antics (més vells de 15 segons)
+                requestTimestamps = requestTimestamps.filter(t => now - t < 15000);
+
+                if (requestTimestamps.length >= 2) {
+                    // Massa peticions! (Aquesta seria la 3a en 15s)
+                    setServerActive(false);
+                    setServerRateLimitError(true);
+                    await sleep(800 * latencyMultiplier);
+
+                    infoTitle.innerText = "Error: 429 Too Many Requests";
+                    infoTitle.style.color = '#a855f7'; // Lila Rate Limit
+                    infoDesc.innerText = "S'ha denegat la petició. Has superat el límit permès per la teva IP limitant la velocitat de connexió (màxim 2 peticions cada 15 segons). Espera una mica per tornar-ho a intentar.";
+                    infoCode.innerText = "HTTP/1.1 429 Too Many Requests\\nRetry-After: 15";
+
+                    setServerRateLimitError(false);
+
+                    // Paquet Lila de retorn
+                    packetEl.style.animation = 'none';
+                    packetEl.offsetHeight;
+
+                    packetEl.innerHTML = '<i class="fa-solid fa-hand"></i>';
+                    packetEl.style.background = '#a855f7';
+                    packetEl.style.color = '#fff';
+                    packetEl.style.opacity = '1';
+                    packetEl.style.animation = `sendRes ${1 * latencyMultiplier}s cubic-bezier(0.4, 0, 0.2, 1) forwards`;
+
+                    await sleep(1000 * latencyMultiplier);
+
+                    // Client rep l'error
+                    packetEl.style.opacity = '0';
+                    clientScreenRows.forEach(row => {
+                        row.style.width = '100%';
+                        row.style.backgroundColor = '#a855f7';
+                    });
+
+                    addLog(verb, currentUrl, '429 Too Many Requests');
+                    isAnimating = false;
+                    return; // Avortem la interacció
+                } else {
+                    // Valid, registrem la petició
+                    requestTimestamps.push(now);
+                }
+            }
+
+            // ---------- BLOC D'AUTENTICACIÓ (401) NOU ----------
+            const requiresAuth = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(verb);
+
+            if (requiresAuth && (!isAuthActive || isJwtHacked)) {
+                // El servidor rebutja la petició per falta de Token o Signatura Invàlida
+                setServerActive(false);
+                setServerAuthError(true);
+                await sleep(800 * latencyMultiplier);
+
+                infoTitle.innerText = isJwtHacked ? "Error: 401 Unauthorized (Invalid Signature)" : "Error: 401 Unauthorized";
+                infoTitle.style.color = '#f59e0b'; // Taronja JWT/Auth error
+                infoDesc.innerText = isJwtHacked
+                    ? "Accés denegat. El token JWT que ha enviat el Client App és caducat o la seva signatura ha estat manipulada."
+                    : "Accés denegat. Aquesta acció requereix credencials vàlides (Token JWT) que l'usuari no ha proporcionat.";
+                infoCode.innerText = "HTTP/1.1 401 Unauthorized";
+
+                setServerAuthError(false);
+
+                // Paquet Taronja de retorn
+                packetEl.style.animation = 'none';
+                packetEl.offsetHeight;
+
+                packetEl.innerHTML = '<i class="fa-solid fa-lock"></i>';
+                packetEl.style.background = '#f59e0b';
+                packetEl.style.color = '#fff';
+                packetEl.style.opacity = '1';
+                packetEl.style.animation = `sendRes ${1 * latencyMultiplier}s cubic-bezier(0.4, 0, 0.2, 1) forwards`;
+
+                await sleep(1000 * latencyMultiplier);
+
+                // Client rep l'error
+                packetEl.style.opacity = '0';
+                clientScreenRows.forEach(row => {
+                    row.style.width = '100%';
+                    row.style.backgroundColor = '#f59e0b';
+                });
+
+                addLog(verb, currentUrl, '401 Unauthorized');
+                isAnimating = false;
+                return; // Avortem la interacció amb la BD
+            }
+
+            // ---------- AFEGIR AQUEST BLOC D'ERRORS GENERALS ----------
+            const isNetworkError = document.getElementById('errorToggle').checked;
+
+            if (isNetworkError) {
+                // 1. El servidor detecta un problema
+                setServerActive(false);
+                setServerError(true);
+                await sleep(800 * latencyMultiplier);
+
+                // 2. Actualitzem el panell d'informació
+                const errorCode = verb === 'GET' ? '404 Not Found' : '500 Internal Server Error';
+                infoTitle.innerText = `Error: ${errorCode}`;
+                infoTitle.style.color = '#ef4444';
+                infoDesc.innerText = verb === 'GET'
+                    ? "El recurs sol·licitat no existeix a la base de dades."
+                    : "S'ha produït un error crític al servidor en intentar processar l'acció.";
+                infoCode.innerText = `HTTP/1.1 ${errorCode}`;
+
+                setServerError(false);
+
+                // 3. Preparem el paquet de resposta (Error)
+                packetEl.style.animation = 'none';
+                packetEl.offsetHeight; // Forcem redibuixat
+
+                packetEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>'; // Icona d'alerta
+                packetEl.style.background = '#ef4444'; // Paquet vermell
+                packetEl.style.color = '#fff';
+                packetEl.style.opacity = '1';
+                packetEl.style.animation = `sendRes ${1 * latencyMultiplier}s cubic-bezier(0.4, 0, 0.2, 1) forwards`;
+
+                await sleep(1000 * latencyMultiplier);
+
+                // 4. El client rep l'error
+                packetEl.style.opacity = '0';
+                clientScreenRows.forEach(row => {
+                    row.style.width = '100%';
+                    row.style.backgroundColor = '#ef4444'; // Pantalla del client en vermell
+                });
+
+                // Registrar el log fallit
+                addLog(verb, currentUrl, errorCode);
+
+                isAnimating = false;
+                return; // SORTIM DE LA FUNCIÓ AQUÍ. Evitem que toqui la BD!
+            }
+            // ---------- FI DEL BLOC NOU ----------
+
+            // Database Operation depending on verb
+            let requestedItemNotFound = false;
+
+            if (verb === 'GET') {
+                const queryVal = document.getElementById('queryInput').value.trim();
+                let searchId = null;
+
+                if (queryVal.startsWith('?id=')) {
+                    searchId = parseInt(queryVal.replace('?id=', ''));
+                }
+
+                if (searchId !== null) {
+                    // Cercar un element específic
+                    const targetRecord = dbState.find(item => item.id === searchId);
+                    if (targetRecord) {
+                        const r = document.getElementById(`db-rec-${targetRecord.id}`);
+                        if (r) {
+                            r.style.transform = 'scale(1.05)';
+                            r.style.background = 'var(--record-hl)';
+                            await sleep(400 * latencyMultiplier);
+                            r.style.transform = 'scale(1)';
+                            r.style.background = 'var(--record-bg)';
+                        }
+                    } else {
+                        // Element no trobat! Forcem un 404 controlat
+                        requestedItemNotFound = true;
+                    }
+                } else {
+                    // Cerca genèrica, interactua amb el primer (només per fer l'efecte limitat)
+                    if (dbState.length > 0) {
+                        const r = document.getElementById(`db-rec-${dbState[0].id}`);
+                        if (r) {
+                            r.style.transform = 'scale(1.05)';
+                            r.style.background = 'var(--record-hl)';
+                            await sleep(400 * latencyMultiplier);
+                            r.style.transform = 'scale(1)';
+                            r.style.background = 'var(--record-bg)';
+                        }
+                    }
+                }
+            }
+            else if (verb === 'POST') {
+                if (dbState.length > 2) {
+                    dbState.shift(); // Remove oldest to not overflow visually
+                }
+                currentRecordId++;
+                const payloadName = document.getElementById('bodyInput').value.trim() || "Usuari creat";
+                dbState.push({ id: currentRecordId, name: payloadName, color: config.color });
+                renderDB();
+                const newR = document.getElementById(`db-rec-${currentRecordId}`);
+                if (newR) {
+                    newR.style.transform = 'scale(1.05)';
+                    newR.style.background = 'var(--record-hl)';
+                    await sleep(400 * latencyMultiplier);
+                    newR.style.transform = 'scale(1)';
+                    newR.style.background = 'var(--record-bg)';
+                }
+            }
+            else if (verb === 'PUT') {
+                const ppQuery = document.getElementById('putPatchQueryInput').value.trim();
+                let putId = null;
+                if (ppQuery.startsWith('?id=')) putId = parseInt(ppQuery.replace('?id=', ''));
+
+                if (dbState.length > 0 && putId !== null) {
+                    const targetIdx = dbState.findIndex(i => i.id === putId);
+                    const payloadName = document.getElementById('bodyInput').value.trim() || "Renovat sencer";
+
+                    if (targetIdx !== -1) {
+                        dbState[targetIdx].name = payloadName;
+                        dbState[targetIdx].color = config.color;
+                        renderDB();
+                        const r = document.getElementById(`db-rec-${putId}`);
+                        if (r) {
+                            r.style.transform = 'scale(1.05)';
+                            r.style.background = 'var(--record-hl)';
+                            await sleep(400 * latencyMultiplier);
+                            r.style.transform = 'scale(1)';
+                            r.style.background = 'var(--record-bg)';
+                        }
+                    } else {
+                        // PUT can create if it doesn't exist
+                        dbState.push({ id: putId, name: payloadName + " (Nou)", color: config.color });
+                        // Actualitzem currentRecordId només si ens hem passat creat artificialment
+                        if (putId > currentRecordId) currentRecordId = putId;
+                        renderDB();
+                        const newR = document.getElementById(`db-rec-${putId}`);
+                        if (newR) {
+                            newR.style.transform = 'scale(1.05)';
+                            await sleep(400 * latencyMultiplier);
+                            newR.style.transform = 'scale(1)';
+                        }
+                    }
+                } else {
+                    requestedItemNotFound = true;
+                }
+            }
+            else if (verb === 'PATCH') {
+                const ppQuery = document.getElementById('putPatchQueryInput').value.trim();
+                let patchId = null;
+                if (ppQuery.startsWith('?id=')) patchId = parseInt(ppQuery.replace('?id=', ''));
+
+                if (dbState.length > 0 && patchId !== null) {
+                    const targetIdx = dbState.findIndex(i => i.id === patchId);
+
+                    if (targetIdx !== -1) {
+                        const payloadName = document.getElementById('bodyInput').value.trim();
+                        if (payloadName) {
+                            dbState[targetIdx].name += ' ' + payloadName;
+                        } else {
+                            dbState[targetIdx].name = "Renovat PATCH"; // Substitueix per complet
+                        }
+                        dbState[targetIdx].color = config.color;
+                        renderDB();
+                        const r = document.getElementById(`db-rec-${patchId}`);
+                        if (r) {
+                            r.style.transform = 'scale(1.05)';
+                            r.style.background = 'var(--record-hl)';
+                            await sleep(400 * latencyMultiplier);
+                            r.style.transform = 'scale(1)';
+                            r.style.background = 'var(--record-bg)';
+                        }
+                    } else {
+                        requestedItemNotFound = true;
+                    }
+                } else {
+                    requestedItemNotFound = true;
+                }
+            }
+            else if (verb === 'DELETE') {
+                const delQuery = document.getElementById('deleteQueryInput').value.trim();
+                let delId = null;
+                if (delQuery.startsWith('?id=')) delId = parseInt(delQuery.replace('?id=', ''));
+
+                if (dbState.length > 0 && delId !== null) {
+                    const itemExists = dbState.some(i => i.id === delId);
+
+                    if (!itemExists) {
+                        // Forcem l'error de Not Found al moment del Delete
+                        requestedItemNotFound = true;
+                    } else {
+                        const r = document.getElementById(`db-rec-${delId}`);
+                        if (r) {
+                            r.style.background = '#ef4444';
+                            r.style.color = '#fff';
+                            r.style.transform = 'scale(0.9)';
+                            r.style.opacity = '0.5';
+                            await sleep(500 * latencyMultiplier);
+                        }
+                        dbState = dbState.filter(item => item.id !== delId);
+                        renderDB();
+                    }
+                } else {
+                    // Si per algun motiu ja no queden elements o l'id és vàlid però no existeix
+                    requestedItemNotFound = true;
+                }
+            }
+            else if (verb === 'OPTIONS') {
+                // OPTIONS does not interact with DB directly, just returns headers smoothly
+                await sleep(500 * latencyMultiplier);
+            }
+
+            // Si s'ha detectat que la cerca (GET, PUT, PATCH, DELETE) no ha trobat el recurs
+            if (requestedItemNotFound) {
+                setServerActive(false);
+                setServerError(true);
+                await sleep(800 * latencyMultiplier);
+
+                infoTitle.innerText = `Error: 404 Not Found`;
+                infoTitle.style.color = '#ef4444';
+                infoDesc.innerText = `El recurs específic que has intentar consultar o manipular no existeix a la base de dades.`;
+                infoCode.innerText = `HTTP/1.1 404 Not Found`;
+
+                setServerError(false);
+
+                // Preparem el paquet de resposta (Error)
+                packetEl.style.animation = 'none';
+                packetEl.offsetHeight;
+
+                packetEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>'; // Icona d'alerta
+                packetEl.style.background = '#ef4444'; // Paquet vermell
+                packetEl.style.color = '#fff';
+                packetEl.style.opacity = '1';
+                packetEl.style.animation = `sendRes ${1 * latencyMultiplier}s cubic-bezier(0.4, 0, 0.2, 1) forwards`;
+
+                await sleep(1000 * latencyMultiplier);
+
+                // El client rep l'error
+                packetEl.style.opacity = '0';
+                clientScreenRows.forEach(row => {
+                    row.style.width = '100%';
+                    row.style.backgroundColor = '#ef4444'; // Pantalla del client en vermell
+                });
+
+                addLog(verb, currentUrl, '404 Not Found');
+
+                isAnimating = false;
+                return; // SORTIM DE LA FUNCIÓ AQUÍ
+            }
+
+            await sleep(400 * latencyMultiplier); // small delay after DB processing
+
+            // Server stops active processing, prepares response
+            setServerActive(false);
+
+            // Response Packet
+            packetEl.style.animation = 'none'; // reset
+            packetEl.offsetHeight; // reflow
+
+            packetEl.innerHTML = config.resIcon;
+            packetEl.style.background = '#cbd5e1'; // greyish white response
+            packetEl.style.color = '#0f172a';
+            packetEl.style.opacity = '1';
+            packetEl.style.animation = `sendRes ${1 * latencyMultiplier}s cubic-bezier(0.4, 0, 0.2, 1) forwards`;
+
+            await sleep(1000 * latencyMultiplier);
+
+            // Client receives response
+            packetEl.style.opacity = '0';
+
+            // ---------- BLOC CORS ----------
+            const isCorsConfigured = document.getElementById('corsToggle').checked;
+            if (!isCorsConfigured) {
+                // El navegador (Client) bloqueja la resposta d'un altre domini per falta de capçaleres de seguretat
+                clientScreenRows.forEach(row => {
+                    row.style.width = '100%';
+                    row.style.backgroundColor = '#ef4444'; // Vermell CORS
+                });
+
+                infoTitle.innerText = "Error: CORS Blocked";
+                infoTitle.style.color = '#ef4444';
+                infoDesc.innerText = "El navegador ha bloquejat la resposta per política de seguretat. El servidor NO ha inclòs la capçalera [Access-Control-Allow-Origin: *] i els dominis http://app.com i http://api.com no coincideixen.";
+                infoCode.innerText = "CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.";
+
+                addLog(verb, '/api/...', 'CORS Error (Blocat pel Client)');
+                isAnimating = false;
+                return;
+            }
+            // ---------- FI BLOC CORS ----------
+
+            if (verb === 'GET') {
+                clientScreenRows[0].style.width = '90%';
+                clientScreenRows[0].style.backgroundColor = config.color;
+                clientScreenRows[1].style.width = '70%';
+                clientScreenRows[1].style.backgroundColor = config.color;
+                clientScreenRows[2].style.width = '40%';
+                clientScreenRows[2].style.backgroundColor = config.color;
+            } else if (verb === 'OPTIONS') {
+                clientScreenRows.forEach(row => { row.style.width = '0%'; });
+                clientScreenRows[1].style.width = '55%';
+                clientScreenRows[1].style.backgroundColor = config.color;
+            } else if (verb === 'DELETE') {
+                clientScreenRows.forEach(row => { row.style.width = '0%'; });
+            } else {
+                clientScreenRows.forEach(row => { row.style.width = '0%'; });
+                // Small success bar
+                clientScreenRows[0].style.width = '30%';
+                clientScreenRows[0].style.backgroundColor = '#10b981';
+            }
+
+            await sleep(500 * latencyMultiplier);
+
+            // Printem el Log correcte
+            addLog(verb, currentUrl, `${config.resIcon} OK`);
+
+            isAnimating = false;
+        }
+
+        // --- Dark / Light Mode ---
+        const themeBtn = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+
+        // Comprovar si hi ha alguna preferència guardada localment
+        const savedTheme = localStorage.getItem('httpApiTheme');
+        if (savedTheme === 'light') {
+            document.body.classList.add('light-mode');
+            themeIcon.classList.replace('fa-moon', 'fa-sun');
+        }
+
+        themeBtn.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+
+            if (isLight) {
+                themeIcon.classList.replace('fa-moon', 'fa-sun');
+                localStorage.setItem('httpApiTheme', 'light');
+            } else {
+                themeIcon.classList.replace('fa-sun', 'fa-moon');
+                localStorage.setItem('httpApiTheme', 'dark');
+            }
+        });
+    </script>
+</body>
+
+</html>
