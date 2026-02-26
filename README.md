@@ -28,6 +28,19 @@ Els simuladors estan fets únicament amb tecnologies web estàndard (HTML, CSS v
 
 No es requereix la instal·lació de cap servidor web ni dependències extra (NPM, Node, etc.). Són completament portables.
 
+## Contribucions i Millores
+⚠️ Errades
+Les animacions poden tenir errades de concepte o imprecisions tècniques. Aquestes eines són una simplificació didàctica i agrairem qualsevol correcció.
+
+🤝 Col·laboració
+Qualsevol millora o aportació serà ben rebuda! Si trobes un error o vols proposar una funcionalitat nova, pots:
+
+Obrir una Issue en aquest repositori.
+
+Fer un Pull Request amb les teves esmenes.
+
+Contactar amb l'autor (@CMB).
+
 ## Llicència
 
 Distribuït sota la **MIT License - Programari Lliure**. Més informació i ús lliure per a la comunitat educativa.
