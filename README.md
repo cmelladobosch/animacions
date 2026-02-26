@@ -7,7 +7,7 @@ Aquest repositori conté un conjunt de simulacions interactives dissenyades per 
 ## Contingut del projecte
 
 ### 1. Simulador de Comandes Git i Docker
-Ves a: `animacions/git/v3/index.html`
+Ves a: [animacions/git/v3/index.html](animacions/git/v3/index.html)
 
 Una simulació interactiva visual per entendre el flux de treball DevOps amb Git i Docker:
 - **Git**: Clone, Init, Add, Commit, Push, Pull, Fetch, Merge. També inclou l'ús de branques i Pull Requests.
@@ -15,7 +15,7 @@ Una simulació interactiva visual per entendre el flux de treball DevOps amb Git
 - Visualització clara i didàctica dels canvis entre el directori de treball (Working Directory), l'àrea de preparació (Staging Area), el repositori local i el repositori remot.
 
 ### 2. Animació de Verbs HTTP i API JWT
-Ves a: `animacions/http-api-jwt/v2/index.html`
+Ves a: [animacions/http-api-jwt/v2/index.html](animacions/http-api-jwt/v2/index.html)
 
 Una eina pràctica per comprendre el funcionament de les peticions web i les APIs REST:
 - **Verbs HTTP**: GET, POST, PUT, PATCH, DELETE, OPTIONS.
@@ -24,7 +24,7 @@ Una eina pràctica per comprendre el funcionament de les peticions web i les API
 
 ## Com utilitzar-ho
 
-Els simuladors estan fets únicament amb tecnologies web estàndard (HTML, CSS vanilla i JavaScript). Per executar-los i utilitzar-los a l'aula, **només cal obrir els arxius `index.html` amb qualsevol navegador web modern** (com Chrome, Firefox, Safari o Edge).
+Els simuladors estan fets únicament amb tecnologies web estàndard (HTML, CSS vanilla i JavaScript). Per executar-los i utilitzar-los a l'aula, **només cal obrir els arxius [index.html](animacions/git/v3/index.html) amb qualsevol navegador web modern** (com Chrome, Firefox, Safari o Edge).
 
 No es requereix la instal·lació de cap servidor web ni dependències extra (NPM, Node, etc.). Són completament portables.
 
