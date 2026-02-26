@@ -7,7 +7,7 @@ Aquest repositori conté un conjunt de simulacions interactives dissenyades per 
 ## Contingut del projecte
 
 ### 1. Simulador de Comandes Git i Docker
-Ves a: [git/v3/index.html](git/v3/index.html)
+Ves a: [animacions/git/v3/index.html](https://cmelladobosch.github.io/animacions/git/v3/index.html)
 
 Una simulació interactiva visual per entendre el flux de treball DevOps amb Git i Docker:
 - **Git**: Clone, Init, Add, Commit, Push, Pull, Fetch, Merge. També inclou l'ús de branques i Pull Requests.
@@ -15,7 +15,7 @@ Una simulació interactiva visual per entendre el flux de treball DevOps amb Git
 - Visualització clara i didàctica dels canvis entre el directori de treball (Working Directory), l'àrea de preparació (Staging Area), el repositori local i el repositori remot.
 
 ### 2. Animació de Verbs HTTP i API JWT
-Ves a: [http-api-jwt/v2/index.html](http-api-jwt/v2/index.html)
+Ves a: [animacions/http-api-jwt/v2/index.html](https://cmelladobosch.github.io/animacions/http-api-jwt/v2/index.html)
 
 Una eina pràctica per comprendre el funcionament de les peticions web i les APIs REST:
 - **Verbs HTTP**: GET, POST, PUT, PATCH, DELETE, OPTIONS.
